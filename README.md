@@ -1,3 +1,3 @@
 # 451R-Capstone
 Team Repository
-Commerce Application
+Commerce Budget Application
