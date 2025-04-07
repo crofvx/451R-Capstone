@@ -1,27 +1,101 @@
 "use client";
+
 import { useState } from "react";
-import { Alert, Button, Label, TextInput } from "flowbite-react";
+import { Alert, Button, Label, Modal, TextInput } from "flowbite-react";
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Register() {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    birthDate: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
-  const today = new Date().toISOString().split("T")[0];
+  const router = useRouter();
+
+  const today = new Date();
+  const minAgeBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+
+  const passwordPattern = new RegExp(`^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()\\-+=_~\`\\[\\]{}:;'"<,>.?/]).{12,}$`);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
+    const value = e.target.value;
+    setFormData({ ...formData, password: value });
+
+    if (value && !passwordPattern.test(value)) {
+      setPasswordError("Password does not meet requirements");
+    } else {
+      setPasswordError("");
+    }
   };
 
   const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setConfirmPassword(value);
+    setFormData({ ...formData, confirmPassword: value });
 
-    if (value && value !== password) {
-      setError("Passwords do not match");
+    if (value && value !== formData.password) {
+      setConfirmPasswordError("Passwords do not match");
     } else {
-      setError("");
+      setConfirmPasswordError("");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!passwordPattern.test(formData.password)) {
+      setPasswordError("Password does not meet requirements");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8080/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          birthDate: formData.birthDate,
+          password: formData.password,
+        }),
+      });
+
+      if (response.ok) {
+        console.log("User registered successfully!");
+        router.push('/dashboard');
+      } else {
+        console.error("Registration failed:", response.statusText);
+        const errorData = await response.json();
+        setModalMessage(errorData.message || response.statusText || "Registration failed.");
+        setShowModal(true);
+      }
+    } catch (error) {
+      console.error("Error:", error);
     }
   };
 
@@ -33,37 +107,37 @@ export default function Register() {
         <div className="flex flex-col items-center gap-12 p-12 bg-white rounded-xl md:p-20 lg:rounded-l-none">
           <h1 className="font-bold text-xl">Create Banking App Account</h1>
           
-          <form className="w-3/4 flex flex-col gap-4">
+          <form className="w-3/4 flex flex-col gap-4" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-4 md:flex-row">
               <div className="md:w-1/2">
                 <Label htmlFor="first-name" value="First Name*:" />
-                <TextInput id="first-name" name="first-name" type="text" maxLength={50} required />
+                <TextInput id="first-name" name="firstName" type="text" maxLength={50} required onChange={handleInputChange} />
               </div>
 
               <div className="md:w-1/2">
                 <Label htmlFor="last-name" value="Last Name*:" />
-                <TextInput id="last-name" name="last-name" type="text" maxLength={50} required />
+                <TextInput id="last-name" name="lastName" type="text" maxLength={50} required onChange={handleInputChange} />
               </div>
             </div>
 
             <div>
               <Label htmlFor="email" value="Email*:" />
-              <TextInput id="email" name="email" type="email" maxLength={254} required />
+              <TextInput id="email" name="email" type="email" maxLength={254} required onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="phone" value="Phone*:" />
-              <TextInput id="phone" name="phone" type="tel" placeholder="5551234567" maxLength={10} required />
+              <TextInput id="phone" name="phone" type="tel" placeholder="5551234567" maxLength={10} pattern="^\d+$" required onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="address" value="Address*:" />
-              <TextInput id="address" name="address" type="text" placeholder="123 Main St, Apt 4B, City, State, ZIP" maxLength={150} required />
+              <TextInput id="address" name="address" type="text" placeholder="123 Main St, Apt 4B, City, State, ZIP" maxLength={150} required onChange={handleInputChange} />
             </div>
 
             <div>
               <Label htmlFor="birthdate" value="Birthdate*:" />
-              <TextInput id="birthdate" name="birthdate" type="date" max={today} required />
+              <TextInput id="birthdate" name="birthDate" type="date" max={minAgeBirthDate} required onChange={handleInputChange} />
             </div>
 
             <div>
@@ -71,14 +145,29 @@ export default function Register() {
               <TextInput id="password" name="password" type="password" maxLength={128} required onChange={handlePasswordChange} />
             </div>
 
+            {passwordError && 
+              <Alert color="failure">
+                <p className="font-medium">Password does not meet requirements</p>
+                <br></br>
+                <p>Password Requirements:</p>
+                <ul className="list-disc list-inside">
+                  <li>At least 12 characters</li>
+                  <li>An uppercase letter</li>
+                  <li>A lowercase letter</li>
+                  <li>A number</li>
+                  <li>A special character</li>
+                </ul>
+              </Alert>
+            }
+
             <div>
               <Label htmlFor="confirm-password" value="Confirm Password*:" />
-              <TextInput id="confirm-password" name="confirm-password" type="password" maxLength={128} required onChange={handleConfirmPasswordChange} />
+              <TextInput id="confirm-password" name="confirmPassword" type="password" maxLength={128} required onChange={handleConfirmPasswordChange} />
             </div>
 
-            {error && 
+            {confirmPasswordError && 
               <Alert color="failure">
-                <span className="font-medium">Passwords do not match</span>
+                <p className="font-medium">Passwords do not match</p>
               </Alert>
             }
 
@@ -90,6 +179,18 @@ export default function Register() {
             </div>
           </form>
         </div>
+
+        <Modal show={showModal} onClose={() => setShowModal(false)}>
+          <Modal.Header>Account Creation Failed</Modal.Header>
+
+          <Modal.Body>
+            <p>There was a problem processing your request. Please check your input and try again.</p>
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue" onClick={() => setShowModal(false)}>OK</Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </main>
   );
