@@ -11,4 +11,6 @@ import capstone.backend.entity.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 	Optional<User> findUserByEmail(String email);
+
+	boolean existsByEmail(String email);
 }

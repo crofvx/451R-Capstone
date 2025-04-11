@@ -18,7 +18,7 @@ public class User {
 	@GeneratedValue(generator = "uuid2")
 	@UuidGenerator
 	@Column(name = "user_id", columnDefinition = "uniqueidentifier")
-	private UUID userID;
+	private UUID userId;
 
 	@Column(name = "first_name", nullable = false, length = 50)
 	private String firstName;
@@ -45,9 +45,9 @@ public class User {
 	public User() {
 	}
 
-	public User(UUID userID, String firstName, String lastName, String email, String phone, String address,
+	public User(UUID userId, String firstName, String lastName, String email, String phone, String address,
 			LocalDate birthDate, String password) {
-		this.userID = userID;
+		this.userId = userId;
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
@@ -59,11 +59,11 @@ public class User {
 
 	// Getters and Setters
 	public UUID getUserId() {
-		return userID;
+		return userId;
 	}
 
 	public void setUserId(UUID userId) {
-		this.userID = userId;
+		this.userId = userId;
 	}
 
 	public String getFirstName() {

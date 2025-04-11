@@ -1,23 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Checkbox, Label, Modal, TextInput } from "flowbite-react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
   });
-  const [showModal, setShowModal] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
-
-  const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLoginData({ ...loginData, [name]: value });
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRememberMe(e.target.checked);
   };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -34,14 +47,23 @@ export default function Home() {
           password: loginData.password,
         }),
       });
-  
+
       if (response.ok) {
+        const data = await response.json();
+        const token = data.token;
+
+        if (rememberMe) {
+          localStorage.setItem('jwt', token);
+        } else {
+          sessionStorage.setItem('jwt', token);
+        }
+
         console.log("Login successful!");
         router.push('/dashboard');
       } else {
         console.error("Login failed:", response.statusText);
         const errorData = await response.json();
-        setModalMessage(errorData.message || response.statusText || "Registration failed.");
+        setModalMessage(errorData.message || response.statusText || "Incorrect username or password.");
         setShowModal(true);
       }
     } catch (error) {
@@ -69,7 +91,7 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Checkbox id="remember" name="remember" />
+              <Checkbox id="remember" name="remember" onChange={handleCheckboxChange} />
               <Label htmlFor="remember">Remember Me</Label>
             </div>
 
@@ -88,7 +110,7 @@ export default function Home() {
         <Modal.Header>Login Failed</Modal.Header>
 
         <Modal.Body>
-          <p>Incorrect username or password.</p>
+          <p>{modalMessage}</p>
         </Modal.Body>
 
         <Modal.Footer>

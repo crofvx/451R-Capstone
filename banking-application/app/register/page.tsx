@@ -16,10 +16,11 @@ export default function Register() {
     password: "",
     confirmPassword: "",
   });
+  const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
-  const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+  const [showModal, setShowModal] = useState(false);
 
   const router = useRouter();
 
@@ -31,6 +32,24 @@ export default function Register() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleEmailBlur = async () => {
+    if (formData.email) {
+      try {
+        const response = await fetch(`http://localhost:8080/api/users/checkEmail?email=${encodeURIComponent(formData.email)}`);
+        const data = await response.json();
+        
+        if (data.taken) {
+          setEmailError("Email address is already taken.");
+        } else {
+          setEmailError("");
+        }
+      } catch (error) {
+        console.error("Error checking email:", error);
+        setEmailError("An error occurred. Please try again.");
+      }
+    }
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,7 +110,7 @@ export default function Register() {
       } else {
         console.error("Registration failed:", response.statusText);
         const errorData = await response.json();
-        setModalMessage(errorData.message || response.statusText || "Registration failed.");
+        setModalMessage(errorData.message || response.statusText || "There was a problem processing your request. Please check your input and try again.");
         setShowModal(true);
       }
     } catch (error) {
@@ -122,8 +141,14 @@ export default function Register() {
 
             <div>
               <Label htmlFor="email" value="Email*:" />
-              <TextInput id="email" name="email" type="email" maxLength={254} required onChange={handleInputChange} />
+              <TextInput id="email" name="email" type="email" maxLength={254} required onChange={handleInputChange} onBlur={handleEmailBlur} />
             </div>
+
+            {emailError && 
+              <Alert color="failure">
+                <p className="font-medium">{emailError}</p>
+              </Alert>
+            }
 
             <div>
               <Label htmlFor="phone" value="Phone*:" />
@@ -147,7 +172,7 @@ export default function Register() {
 
             {passwordError && 
               <Alert color="failure">
-                <p className="font-medium">Password does not meet requirements</p>
+                <p className="font-medium">{passwordError}</p>
                 <br></br>
                 <p>Password Requirements:</p>
                 <ul className="list-disc list-inside">
@@ -167,7 +192,7 @@ export default function Register() {
 
             {confirmPasswordError && 
               <Alert color="failure">
-                <p className="font-medium">Passwords do not match</p>
+                <p className="font-medium">{confirmPasswordError}</p>
               </Alert>
             }
 
@@ -184,7 +209,7 @@ export default function Register() {
           <Modal.Header>Account Creation Failed</Modal.Header>
 
           <Modal.Body>
-            <p>There was a problem processing your request. Please check your input and try again.</p>
+            <p>{modalMessage}</p>
           </Modal.Body>
 
           <Modal.Footer>

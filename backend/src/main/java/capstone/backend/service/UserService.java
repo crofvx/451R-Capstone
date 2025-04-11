@@ -29,6 +29,10 @@ public class UserService {
 		this.passwordEncoder = passwordEncoder;
 	}
 
+	public boolean emailIsTaken(String email) {
+		return userRepository.existsByEmail(email);
+	}
+
 	@Transactional
 	public User createUser(User user) {
 		// Create user account
@@ -82,14 +86,16 @@ public class UserService {
 		return newUser;
 	}
 
-	public boolean authenticateUser(String email, String password) {
+	public User authenticateUser(String email, String password) {
 		Optional<User> optionalUser = userRepository.findUserByEmail(email);
 
 		if (optionalUser.isPresent()) {
 			User user = optionalUser.get();
-			return passwordEncoder.matches(password, user.getPassword());
-		} else {
-			return false;
+			if (passwordEncoder.matches(password, user.getPassword())) {
+				return user;
+			}
 		}
+
+		return null;
 	}
 }
