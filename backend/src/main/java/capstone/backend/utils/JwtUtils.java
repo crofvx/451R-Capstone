@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Jwts;
@@ -11,8 +12,8 @@ import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtils {
-	// avoid hard-coding secret keys in a real-world app
-	private final String jwtSecretKey = "GHTNU39st0VSeFMoeRAdgsuW8ok6v4GU+Lycy7fgVdtpPz2xhx8YlU+D/A07Zy4ByPnxzzeOWM4YSm0/fPioUg==";
+	@Value("${app.jwt-secret-key}")
+	private String jwtSecretKey;
 
 	private SecretKey getSigningKey() {
 		byte[] keyBytes = jwtSecretKey.getBytes(StandardCharsets.UTF_8);
