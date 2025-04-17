@@ -37,9 +37,10 @@ export default function Register() {
   const handleEmailBlur = async () => {
     if (formData.email) {
       try {
-        const response = await fetch(`http://localhost:8080/api/users/checkEmail?email=${encodeURIComponent(formData.email)}`);
+        const response = await fetch(`http://localhost:8080/api/users/check-email?email=${encodeURIComponent(formData.email)}`);
         const data = await response.json();
         
+        // email address already used
         if (data.taken) {
           setEmailError("Email address is already taken.");
         } else {
@@ -110,7 +111,7 @@ export default function Register() {
       } else {
         console.error("Registration failed:", response.statusText);
         const errorData = await response.json();
-        setModalMessage(errorData.message || response.statusText || "There was a problem processing your request. Please check your input and try again.");
+        setModalMessage(errorData.message || response.statusText || "There was a problem creating your account. Please check your input and try again.");
         setShowModal(true);
       }
     } catch (error) {

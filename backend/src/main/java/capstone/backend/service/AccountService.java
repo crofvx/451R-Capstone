@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import capstone.backend.entity.Account;
 import capstone.backend.repository.AccountRepository;
+import jakarta.transaction.Transactional;
 
 @Service
 public class AccountService {
@@ -16,6 +17,7 @@ public class AccountService {
 		this.accountRepository = accountRepository;
 	}
 
+	@Transactional
 	public Account createAccount(Account account) {
 		String accountNo = generateAccountNo();
 		account.setAccountNo(accountNo);

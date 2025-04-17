@@ -2,6 +2,7 @@ package capstone.backend.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -9,8 +10,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import capstone.backend.entity.Account;
+import capstone.backend.entity.PasswordResetToken;
 import capstone.backend.entity.SingleAccountTransaction;
 import capstone.backend.entity.User;
+import capstone.backend.repository.PasswordResetTokenRepository;
 import capstone.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 
@@ -20,13 +23,19 @@ public class UserService {
 	private final AccountService accountService;
 	private final SingleAccountTransactionService singleAccountTransactionService;
 	private final PasswordEncoder passwordEncoder;
+	private final PasswordResetTokenRepository passwordResetTokenRepository;
+	private final PasswordResetEmailService passwordResetEmailService;
 
 	public UserService(UserRepository userRepository, AccountService accountService,
-			SingleAccountTransactionService singleAccountTransactionService, PasswordEncoder passwordEncoder) {
+			SingleAccountTransactionService singleAccountTransactionService, PasswordEncoder passwordEncoder,
+			PasswordResetTokenRepository passwordResetTokenRepository,
+			PasswordResetEmailService passwordResetEmailService) {
 		this.userRepository = userRepository;
 		this.accountService = accountService;
 		this.singleAccountTransactionService = singleAccountTransactionService;
 		this.passwordEncoder = passwordEncoder;
+		this.passwordResetTokenRepository = passwordResetTokenRepository;
+		this.passwordResetEmailService = passwordResetEmailService;
 	}
 
 	public boolean emailIsTaken(String email) {
@@ -97,5 +106,40 @@ public class UserService {
 		}
 
 		return null;
+	}
+
+	@Transactional
+	public void sendPasswordResetEmail(String email) {
+		User user = userRepository.findUserByEmail(email).orElse(null);
+
+		if (user != null) {
+			String token = UUID.randomUUID().toString();
+			Date expiration = new Date(System.currentTimeMillis() + 3600000); // 1 hour expiration
+
+			PasswordResetToken resetToken = new PasswordResetToken();
+			resetToken.setToken(token);
+			resetToken.setExpiration(expiration);
+			resetToken.setUserId(user.getUserId());
+
+			passwordResetTokenRepository.save(resetToken);;
+			passwordResetEmailService.sendEmail(user.getEmail(), token);	
+		}
+	}
+
+	@Transactional
+	public void resetPassword(String token, String newPassword) {
+		PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+				.orElseThrow(() -> new RuntimeException("Invalid token"));
+
+		if (resetToken.getExpiration().before(new Date())) {
+			throw new RuntimeException("Token expired");
+		}
+
+		User user = userRepository.findById(resetToken.getUserId())
+				.orElseThrow(() -> new RuntimeException("User not found for token"));
+
+		user.setPassword(passwordEncoder.encode(newPassword));
+		userRepository.save(user);
+		passwordResetTokenRepository.deleteAllByUserId(user.getUserId());
 	}
 }

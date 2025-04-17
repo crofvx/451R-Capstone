@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +28,7 @@ public class UserController {
 		this.jwtUtils = jwtUtils;
 	}
 
-	@GetMapping("/checkEmail")
+	@GetMapping("/check-email")
 	public ResponseEntity<Map<String, Boolean>> checkEmailAvailability(@RequestParam String email) {
 		boolean taken = userService.emailIsTaken(email);
 		Map<String, Boolean> response = new HashMap<>();
@@ -53,6 +54,31 @@ public class UserController {
 			return ResponseEntity.ok(Map.of("message", "Login successful", "token", jwt));
 		} else {
 			return ResponseEntity.badRequest().body(Map.of("message", "Invalid email or password"));
+		}
+	}
+
+	@PostMapping("/forgot-password")
+	public ResponseEntity<Object> requestPasswordReset(@RequestBody Map<String, String> emailData) {
+		String email = emailData.get("email");
+
+		if (StringUtils.hasText(email)) {
+			userService.sendPasswordResetEmail(email);
+			return ResponseEntity.ok(Map.of("message", "Password reset email sent"));
+		} else {
+			return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
+		}
+	}
+
+	@PostMapping("/reset-password")
+	public ResponseEntity<Object> resetPassword(@RequestBody Map<String, String> newPasswordData) {
+		String resetToken = newPasswordData.get("token");
+		String newPassword = newPasswordData.get("newPassword");
+
+		if (StringUtils.hasText(resetToken) && StringUtils.hasText(newPassword)) {
+			userService.resetPassword(resetToken, newPassword);
+			return ResponseEntity.ok(Map.of("message", "Password reset"));
+		} else {
+			return ResponseEntity.badRequest().body(Map.of("message", "Reset token and new password are required"));
 		}
 	}
 }
