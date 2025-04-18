@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useState } from "react";
 import { Alert, Button, Label, TextInput } from "flowbite-react";
 
@@ -58,13 +57,17 @@ export default function ForgotPassword() {
           <p className="w-3/4">Enter your email below, and we'll send you a link to reset your password</p>
           
           <form className="w-3/4 flex flex-col gap-4" onSubmit={handleSend}>
+
+            <div>
+
           <div>
+
               <Label htmlFor="email" value="Email:" />
               <TextInput id="email" name="email" type="email" maxLength={254} required onChange={handleEmailChange} />
             </div>
-            
+              
             <Button type="submit" className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue">Send</Button>
-          
+
             {sentStatusMessage && (
               <Alert color={sent ? "success" : "failure"}>
                 <p className="font-medium">{sentStatusMessage}</p>

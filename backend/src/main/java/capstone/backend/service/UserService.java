@@ -142,4 +142,53 @@ public class UserService {
 		userRepository.save(user);
 		passwordResetTokenRepository.deleteAllByUserId(user.getUserId());
 	}
+	
+	@Transactional
+	public void updateContactInfo(UUID userId, String newEmail, String newPhone, String newAddress) {
+		Optional<User> optionalUser = userRepository.findById(userId);
+		
+		if(optionalUser.isPresent()) {
+			User user = optionalUser.get();
+			
+			if (user.getEmail() != newEmail) {
+				user.setEmail(newEmail);
+			}
+			
+			if (user.getPhone() != newPhone) {
+				user.setPhone(newPhone);
+			}
+			
+			if (user.getAddress() != newAddress) {
+				user.setAddress(newAddress);
+			}
+			
+			userRepository.save(user);
+		}
+		
+	}
+		
+		
+		@Transactional
+		public void updatePassword(UUID userId, String currentPassword, String newPassword) {
+			
+			if (currentPassword == null || newPassword == null) {
+		        throw new IllegalArgumentException("Password fields must not be null");
+		    }
+			
+			
+			Optional<User> optionalUser = userRepository.findById(userId);
+			
+			
+			if(optionalUser.isPresent()) {
+				User user = optionalUser.get();
+				
+				if (passwordEncoder.matches(currentPassword, user.getPassword()) && !passwordEncoder.matches(newPassword, user.getPassword())) {
+					user.setPassword(passwordEncoder.encode(newPassword));
+				
+					
+					userRepository.save(user);
+				}
+				
+		}
+	}
 }
