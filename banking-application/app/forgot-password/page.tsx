@@ -57,7 +57,11 @@ export default function ForgotPassword() {
           <p className="w-3/4">Enter your email below, and we'll send you a link to reset your password</p>
           
           <form className="w-3/4 flex flex-col gap-4" onSubmit={handleSend}>
+
             <div>
+
+          <div>
+
               <Label htmlFor="email" value="Email:" />
               <TextInput id="email" name="email" type="email" maxLength={254} required onChange={handleEmailChange} />
             </div>

@@ -74,7 +74,7 @@
 	        <version>0.12.6</version>
 	        <scope>runtime</scope>
 	    </dependency>
-	    <dependency>
+		<dependency>
 		  <groupId>com.sendgrid</groupId>
 		  <artifactId>sendgrid-java</artifactId>
 		</dependency>
