@@ -1,197 +1,183 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Label, Modal, TextInput } from "flowbite-react";
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Image from "next/image";
 
-export default function Register() {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    birthDate: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [passwordError, setPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
+export default function Transfer() {
+  const [view, setView] = useState("home"); // "home", "payBills", "transferMoney"
 
-  const router = useRouter();
-
-  const today = new Date();
-  const minAgeBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0];
-
-  const passwordPattern = new RegExp(`^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()\\-+=_~\`\\[\\]{}:;'"<,>.?/]).{12,}$`);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData({ ...formData, password: value });
-
-    if (value && !passwordPattern.test(value)) {
-      setPasswordError("Password does not meet requirements");
-    } else {
-      setPasswordError("");
-    }
-  };
-
-  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData({ ...formData, confirmPassword: value });
-
-    if (value && value !== formData.password) {
-      setConfirmPasswordError("Passwords do not match");
-    } else {
-      setConfirmPasswordError("");
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!passwordPattern.test(formData.password)) {
-      setPasswordError("Password does not meet requirements");
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setConfirmPasswordError("Passwords do not match");
-      return;
-    }
-
-    try {
-      const response = await fetch("http://localhost:8080/api/users/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          birthDate: formData.birthDate,
-          password: formData.password,
-        }),
-      });
-
-      if (response.ok) {
-        console.log("User registered successfully!");
-        router.push('/dashboard');
-      } else {
-        console.error("Registration failed:", response.statusText);
-        const errorData = await response.json();
-        setModalMessage(errorData.message || response.statusText || "Registration failed.");
-        setShowModal(true);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
+  // Go back button
+  const BackButton = () => (
+    <button
+      className="absolute top-6 left-6 bg-white text-green-800 px-4 py-2 rounded shadow hover:bg-gray-100"
+      onClick={() => setView("home")}
+    >
+      ⬅ Back
+    </button>
+  );
 
   return (
-    <main className="box-border w-screen min-h-screen py-20 flex items-center justify-center bg-dark-green">
-      <div className="w-[90vw] min-h-[85vh] md:w-[75vw] lg:w-[60vw] lg:grid lg:grid-cols-[1fr_3fr]">
-        <div className="hidden bg-light-green lg:block lg:rounded-l-xl"></div>
-        
-        <div className="flex flex-col items-center gap-12 p-12 bg-white rounded-xl md:p-20 lg:rounded-l-none">
-          <h1 className="font-bold text-xl">Create Banking App Account</h1>
-          
-          <form className="w-3/4 flex flex-col gap-4" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-4 md:flex-row">
-              <div className="md:w-1/2">
-                <Label htmlFor="first-name" value="First Name*:" />
-                <TextInput id="first-name" name="firstName" type="text" maxLength={50} required onChange={handleInputChange} />
-              </div>
+    <main className="w-screen h-screen flex items-center justify-center bg-dark-green relative">
+      {view === "home" && (
+        <div className="flex flex-wrap justify-center gap-16">
+          {/* 
+          // Pay Bills Card 
+          <div
+            className="w-64 h-64 bg-yellow-400 rounded-xl shadow-lg cursor-pointer"
+            onClick={() => setView("payBills")}
+          >
+            <div className="h-[150px] w-full rounded-t-[13px] overflow-hidden">
+              <Image
+                src="/pay.jpg"
+                alt="Pay Bills"
+                width={256}
+                height={112}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="bg-white h-[119px] rounded-b-[13px] flex items-center justify-center">
+              <h2 className="text-green-900 font-bold text-2xl">Pay Bills</h2>
+            </div>
+          </div>
+          */}
 
-              <div className="md:w-1/2">
-                <Label htmlFor="last-name" value="Last Name*:" />
-                <TextInput id="last-name" name="lastName" type="text" maxLength={50} required onChange={handleInputChange} />
-              </div>
+          {/* Transfer Money Card */}
+          <div
+            className="w-64 h-64 bg-yellow-400 rounded-xl shadow-lg cursor-pointer"
+            onClick={() => setView("transferMoney")}
+          >
+            <div className="h-[150px] w-full rounded-t-[13px] overflow-hidden">
+              <Image
+                src="/transfer.jpg"
+                alt="Transfer"
+                width={192}
+                height={112}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="bg-white h-[119px] rounded-b-[13px] flex items-center justify-center">
+              <h2 className="text-green-900 font-bold text-2xl">Transfer</h2>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pay Bills Form 
+      {view === "payBills" && (
+        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
+          <BackButton />
+          <h1 className="text-2xl font-bold text-center text-green-900 mb-6">Pay Your Bills</h1>
+          <form>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Bill Type</label>
+              <select className="w-full mt-1 p-2 border rounded">
+                <option>Electricity</option>
+                <option>Water</option>
+                <option>Internet</option>
+              </select>
             </div>
 
-            <div>
-              <Label htmlFor="email" value="Email*:" />
-              <TextInput id="email" name="email" type="email" maxLength={254} required onChange={handleInputChange} />
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Account Number</label>
+              <input type="text" className="w-full mt-1 p-2 border rounded" />
             </div>
 
-            <div>
-              <Label htmlFor="phone" value="Phone*:" />
-              <TextInput id="phone" name="phone" type="tel" placeholder="5551234567" maxLength={10} pattern="^\d+$" required onChange={handleInputChange} />
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Amount</label>
+              <input type="number" className="w-full mt-1 p-2 border rounded" />
             </div>
 
-            <div>
-              <Label htmlFor="address" value="Address*:" />
-              <TextInput id="address" name="address" type="text" placeholder="123 Main St, Apt 4B, City, State, ZIP" maxLength={150} required onChange={handleInputChange} />
-            </div>
-
-            <div>
-              <Label htmlFor="birthdate" value="Birthdate*:" />
-              <TextInput id="birthdate" name="birthDate" type="date" max={minAgeBirthDate} required onChange={handleInputChange} />
-            </div>
-
-            <div>
-              <Label htmlFor="password" value="Password*:" />
-              <TextInput id="password" name="password" type="password" maxLength={128} required onChange={handlePasswordChange} />
-            </div>
-
-            {passwordError && 
-              <Alert color="failure">
-                <p className="font-medium">Password does not meet requirements</p>
-                <br></br>
-                <p>Password Requirements:</p>
-                <ul className="list-disc list-inside">
-                  <li>At least 12 characters</li>
-                  <li>An uppercase letter</li>
-                  <li>A lowercase letter</li>
-                  <li>A number</li>
-                  <li>A special character</li>
-                </ul>
-              </Alert>
-            }
-
-            <div>
-              <Label htmlFor="confirm-password" value="Confirm Password*:" />
-              <TextInput id="confirm-password" name="confirmPassword" type="password" maxLength={128} required onChange={handleConfirmPasswordChange} />
-            </div>
-
-            {confirmPasswordError && 
-              <Alert color="failure">
-                <p className="font-medium">Passwords do not match</p>
-              </Alert>
-            }
-
-            <Button type="submit" className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue">Create Account</Button>
-
-            <div className="flex flex-col items-center gap-2 text-sm md:flex-row md:justify-center">
-              Already have an account?
-              <Link href="/" className="text-light-blue hover:underline">Log in</Link>
-            </div>
+            <button
+              type="submit"
+              className="w-full bg-green-700 text-white py-2 px-4 rounded hover:bg-green-800"
+            >
+              Pay Now
+            </button>
           </form>
         </div>
+      )}
+      */}
 
-        <Modal show={showModal} onClose={() => setShowModal(false)}>
-          <Modal.Header>Account Creation Failed</Modal.Header>
+      {view === "transferMoney" && (
+        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
+          <BackButton />
+          <h1 className="text-2xl font-bold text-center text-green-900 mb-6">
+            Transfer Between Accounts
+          </h1>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
 
-          <Modal.Body>
-            <p>There was a problem processing your request. Please check your input and try again.</p>
-          </Modal.Body>
+              const form = e.target as HTMLFormElement;
+              const from = (form.elements.namedItem("fromAccount") as HTMLSelectElement).value;
+              const to = (form.elements.namedItem("toAccount") as HTMLSelectElement).value;
+              const amount = parseFloat(
+                (form.elements.namedItem("amount") as HTMLInputElement).value
+              );
 
-          <Modal.Footer>
-            <Button className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue" onClick={() => setShowModal(false)}>OK</Button>
-          </Modal.Footer>
-        </Modal>
-      </div>
+              if (from === to) {
+                alert("Source and destination accounts must be different.");
+                return;
+              }
+
+              if (isNaN(amount) || amount <= 0) {
+                alert("Please enter a valid amount.");
+                return;
+              }
+
+              alert(`Transferred $${amount.toFixed(2)} from ${from} to ${to}.`);
+              setView("home");
+            }}
+          >
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                From Account
+              </label>
+              <select
+                name="fromAccount"
+                className="w-full mt-1 p-2 border rounded"
+                required
+              >
+                <option value="Checking">Checking</option>
+                <option value="Savings">Savings</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">
+                To Account
+              </label>
+              <select
+                name="toAccount"
+                className="w-full mt-1 p-2 border rounded"
+                required
+              >
+                <option value="Savings">Savings</option>
+                <option value="Checking">Checking</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Amount</label>
+              <input
+                type="number"
+                name="amount"
+                min="0.01"
+                step="0.01"
+                className="w-full mt-1 p-2 border rounded"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-green-700 text-white py-5 px-8 text-xl font-bold rounded-2xl shadow-lg hover:bg-green-800 transition duration-200"
+              >
+              Transfer Money
+            </button>
+          </form>
+        </div>
+      )}
     </main>
   );
 }
