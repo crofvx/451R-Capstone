@@ -40,6 +40,12 @@ public class PasswordResetToken {
 		this.userId = userId;
 	}
 
+	public PasswordResetToken(String token, Date expiration, UUID userId) {
+		this.token = token;
+		this.expiration = expiration;
+		this.userId = userId;
+	}
+
 	// Getters and Setters
 	public UUID getTokenId() {
 		return tokenId;

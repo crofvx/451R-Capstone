@@ -55,51 +55,32 @@ public class UserService {
 		BigDecimal savingAccountBalance = new BigDecimal(accountService.generateRandomBalance(1000, 5000));
 
 		// Create checking account
-		Account checkingAccount = new Account();
-		checkingAccount.setAccountType("checking");
-		checkingAccount.setCreationDate(currentDate);
-		checkingAccount.setBalance(checkingAccountBalance);
-		checkingAccount.setUserId(userId);
+		Account checkingAccount = new Account("checking", currentDate, checkingAccountBalance, userId);
 		accountService.createAccount(checkingAccount);
 
-		String checkingAccountNo = checkingAccount.getAccountNo();
-
 		// Create initial deposit transaction to checking account
-		SingleAccountTransaction checkingAccountDeposit = new SingleAccountTransaction();
-		checkingAccountDeposit.setTransactionType("deposit");
-		checkingAccountDeposit.setTransactionDate(currentDate);
-		checkingAccountDeposit.setTransactionAmount(checkingAccountBalance);
-		checkingAccountDeposit.setDescription("Initial Deposit");
-		checkingAccountDeposit.setAccountNo(checkingAccountNo);
+		SingleAccountTransaction checkingAccountDeposit = new SingleAccountTransaction("deposit", currentDate,
+				checkingAccountBalance, "Initial Deposit", checkingAccount.getAccountNo());
 		singleAccountTransactionService.createTransaction(checkingAccountDeposit);
 
 		// Create savings account
-		Account savingsAccount = new Account();
-		savingsAccount.setAccountType("saving");
-		savingsAccount.setCreationDate(currentDate);
-		savingsAccount.setBalance(savingAccountBalance);
-		savingsAccount.setUserId(userId);
+		Account savingsAccount = new Account("saving", currentDate, savingAccountBalance, userId);
 		accountService.createAccount(savingsAccount);
 
-		String savingsAccountNo = savingsAccount.getAccountNo();
-
 		// Create initial deposit transaction to savings account
-		SingleAccountTransaction savingAccountDeposit = new SingleAccountTransaction();
-		savingAccountDeposit.setTransactionType("deposit");
-		savingAccountDeposit.setTransactionDate(currentDate);
-		savingAccountDeposit.setTransactionAmount(savingAccountBalance);
-		savingAccountDeposit.setDescription("Initial Deposit");
-		savingAccountDeposit.setAccountNo(savingsAccountNo);
+		SingleAccountTransaction savingAccountDeposit = new SingleAccountTransaction("deposit", currentDate,
+				savingAccountBalance, "Initial Deposit", savingsAccount.getAccountNo());
 		singleAccountTransactionService.createTransaction(savingAccountDeposit);
 
 		return newUser;
 	}
 
 	public User authenticateUser(String email, String password) {
-		Optional<User> optionalUser = userRepository.findUserByEmail(email);
+		Optional<User> optionalUser = userRepository.findByEmail(email);
 
 		if (optionalUser.isPresent()) {
 			User user = optionalUser.get();
+
 			if (passwordEncoder.matches(password, user.getPassword())) {
 				return user;
 			}
@@ -110,19 +91,16 @@ public class UserService {
 
 	@Transactional
 	public void sendPasswordResetEmail(String email) {
-		User user = userRepository.findUserByEmail(email).orElse(null);
+		User user = userRepository.findByEmail(email).orElse(null);
 
 		if (user != null) {
 			String token = UUID.randomUUID().toString();
 			Date expiration = new Date(System.currentTimeMillis() + 3600000); // 1 hour expiration
 
-			PasswordResetToken resetToken = new PasswordResetToken();
-			resetToken.setToken(token);
-			resetToken.setExpiration(expiration);
-			resetToken.setUserId(user.getUserId());
+			PasswordResetToken resetToken = new PasswordResetToken(token, expiration, user.getUserId());
+			passwordResetTokenRepository.save(resetToken);
 
-			passwordResetTokenRepository.save(resetToken);;
-			passwordResetEmailService.sendEmail(user.getEmail(), token);	
+			passwordResetEmailService.sendEmail(user.getEmail(), token);
 		}
 	}
 
@@ -142,53 +120,47 @@ public class UserService {
 		userRepository.save(user);
 		passwordResetTokenRepository.deleteAllByUserId(user.getUserId());
 	}
-	
+
 	@Transactional
 	public void updateContactInfo(UUID userId, String newEmail, String newPhone, String newAddress) {
 		Optional<User> optionalUser = userRepository.findById(userId);
-		
-		if(optionalUser.isPresent()) {
+
+		if (optionalUser.isPresent()) {
 			User user = optionalUser.get();
-			
-			if (user.getEmail() != newEmail) {
+
+			if (!user.getEmail().equals(newEmail)) {
 				user.setEmail(newEmail);
 			}
-			
-			if (user.getPhone() != newPhone) {
+
+			if (!user.getPhone().equals(newPhone)) {
 				user.setPhone(newPhone);
 			}
-			
-			if (user.getAddress() != newAddress) {
+
+			if (!user.getAddress().equals(newAddress)) {
 				user.setAddress(newAddress);
 			}
-			
+
 			userRepository.save(user);
 		}
-		
 	}
-		
-		
-		@Transactional
-		public void updatePassword(UUID userId, String currentPassword, String newPassword) {
-			
-			if (currentPassword == null || newPassword == null) {
-		        throw new IllegalArgumentException("Password fields must not be null");
-		    }
-			
-			
-			Optional<User> optionalUser = userRepository.findById(userId);
-			
-			
-			if(optionalUser.isPresent()) {
-				User user = optionalUser.get();
-				
-				if (passwordEncoder.matches(currentPassword, user.getPassword()) && !passwordEncoder.matches(newPassword, user.getPassword())) {
-					user.setPassword(passwordEncoder.encode(newPassword));
-				
-					
-					userRepository.save(user);
-				}
-				
+
+	@Transactional
+	public void updatePassword(UUID userId, String currentPassword, String newPassword) {
+		if (currentPassword == null || newPassword == null) {
+			throw new IllegalArgumentException("Password fields must not be null");
+		}
+
+		Optional<User> optionalUser = userRepository.findById(userId);
+
+		if (optionalUser.isPresent()) {
+			User user = optionalUser.get();
+
+			if (passwordEncoder.matches(currentPassword, user.getPassword())
+					&& !passwordEncoder.matches(newPassword, user.getPassword())) {
+				user.setPassword(passwordEncoder.encode(newPassword));
+
+				userRepository.save(user);
+			}
 		}
 	}
 }
