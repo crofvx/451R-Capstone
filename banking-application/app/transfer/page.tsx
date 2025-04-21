@@ -1,10 +1,98 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Button, Modal } from "flowbite-react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function Transfer() {
-  const [view, setView] = useState("home"); // "home", "payBills", "transferMoney"
+  const [userToken, setUserToken] = useState("");
+
+  const router = useRouter();
+  
+  useEffect(() => {
+    const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+
+    if (!token) {
+      router.push('/');
+    } else {
+      setUserToken(token);
+    }
+  }, [router]);
+
+  const [view, setView] = useState("transferMoney"); // "home", "payBills", "transferMoney"
+  const [transferData, setTransferData] = useState({
+    sender: "checking",
+    receiver: "saving",
+    amount: "",
+  });
+  const [modalTitle, setModalTitle] = useState("Transfer Failed");
+  const [modalMessage, setModalMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setTransferData({ ...transferData, [name]: value });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setTransferData({ ...transferData, [name]: value });
+  };
+
+  const handleTransfer = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (transferData.receiver === transferData.sender) {
+      setModalMessage("From account and to account must be different");
+      setShowModal(true);
+      return;
+    }
+
+    if (isNaN(+transferData.amount) || +transferData.amount <= 0) {
+      setModalMessage(`${transferData.amount} is an invalid amount`);
+      setShowModal(true);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8080/api/transfers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({
+          sender: transferData.sender,
+          receiver: transferData.receiver,
+          amount: transferData.amount,
+        }),
+      });
+
+      const errorData = await response.json();
+
+      if (response.ok) {
+        console.log("Transferred funds!");
+        setModalTitle("Transfer Successful");
+        setModalMessage(`Transferred $${(+transferData.amount).toFixed(2)} from ${transferData.sender} to ${transferData.receiver}.`);
+        setShowModal(true);
+      } else {
+        console.error("Transfer failed:", response.statusText, errorData);
+
+        if (errorData?.message?.toLowerCase().includes("insufficient funds")) {
+          setModalMessage(`Insufficient funds in ${transferData.sender} account`);
+        } else {
+          setModalMessage(errorData.message || response.statusText || "Transfer failed");
+        }
+
+        setShowModal(true);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setModalMessage("An error occurred. Please try again.");
+      setShowModal(true);
+    }
+  };
 
   // Go back button
   const BackButton = () => (
@@ -105,41 +193,20 @@ export default function Transfer() {
             Transfer Between Accounts
           </h1>
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-
-              const form = e.target as HTMLFormElement;
-              const from = (form.elements.namedItem("fromAccount") as HTMLSelectElement).value;
-              const to = (form.elements.namedItem("toAccount") as HTMLSelectElement).value;
-              const amount = parseFloat(
-                (form.elements.namedItem("amount") as HTMLInputElement).value
-              );
-
-              if (from === to) {
-                alert("Source and destination accounts must be different.");
-                return;
-              }
-
-              if (isNaN(amount) || amount <= 0) {
-                alert("Please enter a valid amount.");
-                return;
-              }
-
-              alert(`Transferred $${amount.toFixed(2)} from ${from} to ${to}.`);
-              setView("home");
-            }}
+            onSubmit={handleTransfer}
           >
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">
                 From Account
               </label>
               <select
-                name="fromAccount"
+                name="sender"
                 className="w-full mt-1 p-2 border rounded"
                 required
+                onChange={handleSelectChange}
               >
-                <option value="Checking">Checking</option>
-                <option value="Savings">Savings</option>
+                <option value="checking">Checking</option>
+                <option value="saving">Savings</option>
               </select>
             </div>
 
@@ -148,12 +215,13 @@ export default function Transfer() {
                 To Account
               </label>
               <select
-                name="toAccount"
+                name="receiver"
                 className="w-full mt-1 p-2 border rounded"
                 required
+                onChange={handleSelectChange}
               >
-                <option value="Savings">Savings</option>
-                <option value="Checking">Checking</option>
+                <option value="saving">Savings</option>
+                <option value="checking">Checking</option>
               </select>
             </div>
 
@@ -166,6 +234,7 @@ export default function Transfer() {
                 step="0.01"
                 className="w-full mt-1 p-2 border rounded"
                 required
+                onChange={handleInputChange}
               />
             </div>
 
@@ -178,6 +247,18 @@ export default function Transfer() {
           </form>
         </div>
       )}
+
+      <Modal show={showModal} onClose={() => setShowModal(false)}>
+        <Modal.Header>{modalTitle}</Modal.Header>
+
+        <Modal.Body>
+          <p>{modalMessage}</p>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue" onClick={() => setShowModal(false)}>OK</Button>
+        </Modal.Footer>
+      </Modal>
     </main>
   );
 }

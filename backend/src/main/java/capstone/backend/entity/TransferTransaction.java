@@ -13,16 +13,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "single_account_transactions")
-public class SingleAccountTransaction {
+@Table(name = "transfer_transactions")
+public class TransferTransaction {
 	@Id
 	@GeneratedValue(generator = "uuid2")
 	@UuidGenerator
 	@Column(name = "transaction_id", columnDefinition = "uniqueidentifier")
 	private UUID transactionId;
-
-	@Column(name = "transaction_type", length = 10, nullable = false)
-	private String transactionType;
 
 	@Column(name = "transaction_date", nullable = false)
 	private LocalDate transactionDate;
@@ -33,30 +30,22 @@ public class SingleAccountTransaction {
 	@Column(name = "description", length = 250, nullable = false)
 	private String description;
 
-	@Column(name = "account_no", length = 16, nullable = false)
-	private String accountNo;
-
 	// Constructors
-	public SingleAccountTransaction() {
+	public TransferTransaction() {
 	}
 
-	public SingleAccountTransaction(UUID transactionId, String transactionType, LocalDate transactionDate,
-			BigDecimal transactionAmount, String description, String accountNo) {
+	public TransferTransaction(UUID transactionId, LocalDate transactionDate, BigDecimal transactionAmount,
+			String description) {
 		this.transactionId = transactionId;
-		this.transactionType = transactionType;
 		this.transactionDate = transactionDate;
 		this.transactionAmount = transactionAmount;
 		this.description = description;
-		this.accountNo = accountNo;
 	}
 
-	public SingleAccountTransaction(String transactionType, LocalDate transactionDate, BigDecimal transactionAmount,
-			String description, String accountNo) {
-		this.transactionType = transactionType;
+	public TransferTransaction(LocalDate transactionDate, BigDecimal transactionAmount, String description) {
 		this.transactionDate = transactionDate;
 		this.transactionAmount = transactionAmount;
 		this.description = description;
-		this.accountNo = accountNo;
 	}
 
 	// Getters and Setters
@@ -66,14 +55,6 @@ public class SingleAccountTransaction {
 
 	public void setTransactionId(UUID transactionId) {
 		this.transactionId = transactionId;
-	}
-
-	public String getTransactionType() {
-		return transactionType;
-	}
-
-	public void setTransactionType(String transactionType) {
-		this.transactionType = transactionType;
 	}
 
 	public LocalDate getTransactionDate() {
@@ -98,13 +79,5 @@ public class SingleAccountTransaction {
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	public String getAccountNo() {
-		return accountNo;
-	}
-
-	public void setAccountNo(String accountNo) {
-		this.accountNo = accountNo;
 	}
 }

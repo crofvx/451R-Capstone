@@ -57,6 +57,17 @@ public class User {
 		this.password = password;
 	}
 
+	public User(String firstName, String lastName, String email, String phone, String address, LocalDate birthDate,
+			String password) {
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.email = email;
+		this.phone = phone;
+		this.address = address;
+		this.birthDate = birthDate;
+		this.password = password;
+	}
+
 	// Getters and Setters
 	public UUID getUserId() {
 		return userId;

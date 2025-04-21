@@ -40,6 +40,13 @@ public class Account {
 		this.userId = userId;
 	}
 
+	public Account(String accountType, LocalDate creationDate, BigDecimal balance, UUID userId) {
+		this.accountType = accountType;
+		this.creationDate = creationDate;
+		this.balance = balance;
+		this.userId = userId;
+	}
+
 	// Getters and Setters
 	public String getAccountNo() {
 		return accountNo;
