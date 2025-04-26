@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button, Modal } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Component } from "../components/budgetToolbar";
 
 export default function Transfer() {
   const [userToken, setUserToken] = useState("");
@@ -11,7 +12,7 @@ export default function Transfer() {
   const router = useRouter();
   
   useEffect(() => {
-    const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+  const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
 
     if (!token) {
       router.push('/');
@@ -106,6 +107,7 @@ export default function Transfer() {
 
   return (
     <main className="w-screen h-screen flex items-center justify-center bg-dark-green relative">
+      <Component/>
       {view === "home" && (
         <div className="flex flex-wrap justify-center gap-16">
           {/* 

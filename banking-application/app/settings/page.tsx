@@ -4,6 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { Alert, Button, Modal } from "flowbite-react";
 import { useRouter } from 'next/navigation';
+import { Component } from "../components/budgetToolbar";
 
 export default function SettingsPage() {
   const [userToken, setUserToken] = useState("");
@@ -162,33 +163,8 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-white flex flex-col">
       
       {/* ✅ Top Navigation Bar */}
-      <nav className="w-full bg-white shadow-sm py-4 px-8 flex items-center justify-between">
-        {/* Left Logo */}
-        <div className="text-2xl font-bold text-black">App Name(TBD)</div>
-
-        {/* Center Nav Links */}
-        <div className="space-x-8 text-[16px] font-medium text-black">
-          <Link
-            href="/dashboard"
-            className="underline underline-offset-4 decoration-2 decoration-black hover:text-[#245C3E]"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/budgeting"
-            className="underline underline-offset-4 decoration-2 decoration-black hover:text-[#245C3E]"
-          >
-            Budgeting
-          </Link>
-        </div>
-
-        {/* Right Button (Settings) */}
-        <Link
-          href="/settings"
-          className="bg-white border border-gray-300 px-4 py-2 rounded-full text-sm font-semibold text-gray-800 hover:bg-gray-100 transition"
-        >
-          Settings
-        </Link>
+      <nav className="w-full py-4 px-8">
+        <Component/>
       </nav>
 
       {/* ✅ Header Section */}

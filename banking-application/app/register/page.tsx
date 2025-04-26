@@ -125,7 +125,10 @@ export default function Register() {
         <div className="hidden bg-light-green lg:block lg:rounded-l-xl"></div>
         
         <div className="flex flex-col items-center gap-12 p-12 bg-white rounded-xl md:p-20 lg:rounded-l-none">
-          <h1 className="font-bold text-xl">Create Banking App Account</h1>
+          <h1 className="font-bold text-2xl">
+            Manage monies{" "}
+            <span className="font-extrabold text-green-800">your way.</span>
+            </h1>
           
           <form className="w-3/4 flex flex-col gap-4" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-4 md:flex-row">
