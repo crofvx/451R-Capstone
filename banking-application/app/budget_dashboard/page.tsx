@@ -2,12 +2,30 @@
 
 import { DarkThemeToggle } from "flowbite-react"
 import { Component } from "../components/budgetToolbar";
+import { useEffect, useState } from "react";
 
 
 import { useRouter } from "next/navigation";
 
 export default function BudgetingHome() {
+  const [userToken, setUserToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  
+  useEffect(() => {
+    const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+  
+    if (!token) {
+      router.push('/');
+    } else {
+      setUserToken(token);
+      setLoading(false);
+    }
+  }, [router]);
+  
+  if (loading) {
+    return null;
+  }
 
   return (
     <main className="w-screen h-screen flex items-center justify-center bg-dark-green">

@@ -104,6 +104,7 @@ export default function expensesDonut() {
 import { useState, useEffect, SetStateAction } from "react";
 import { Component } from "../components/budgetToolbar";
 import { Label, Select, TextInput, Button} from "flowbite-react";
+import { useRouter } from "next/navigation";
 
 
 import {
@@ -113,13 +114,34 @@ import {
     Legend,
     ResponsiveContainer,
 } from "recharts";
-import { useRouter } from "next/navigation";
 
-const COLORS = ["#4CAF50", "#81C784", "#388E3C", "#A5D6A7", "#2E7D32"];
-const LOCAL_STORAGE_KEY = "budget_expenses";
+
+
 
 const ExpensesPage = () => {
+
+    const [userToken, setUserToken] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+
+        if (!token) {
+            router.push('/');
+        } else {
+            setUserToken(token);
+            setLoading(false);
+        }
+    }, [router]);
+
+    if (loading) {
+        return null;
+    }
+
+    const COLORS = ["#4CAF50", "#81C784", "#388E3C", "#A5D6A7", "#2E7D32"];
+    const LOCAL_STORAGE_KEY = "budget_expenses";
+
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {

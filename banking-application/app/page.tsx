@@ -77,7 +77,7 @@ export default function Home() {
         <div className="hidden bg-light-green lg:block lg:rounded-l-xl"></div>
         
         <div className="flex flex-col items-center gap-12 p-12 bg-white rounded-xl md:p-20 lg:rounded-l-none">
-          <h1 className="font-bold text-xl">Log In to Banking App</h1>
+          <h1 className="font-bold text-2xl">Log in to your account.</h1>
 
           <form className="w-3/4 flex flex-col gap-4" onSubmit={handleLogin}>
             <div>

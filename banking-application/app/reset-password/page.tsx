@@ -5,6 +5,7 @@ import { Alert, Button, Label, Modal, TextInput } from "flowbite-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function ResetPassword() {
+  
   const [resetPasswordData, setResetPasswordData] = useState({
     newPassword: "",
     confirmNewPassword: "",
