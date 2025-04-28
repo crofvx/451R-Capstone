@@ -1,9 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Button, Label, TextInput } from "flowbite-react";
+import { useRouter } from "next/navigation";
 
 export default function ForgotPassword() {
+  const router = useRouter();
+    
+  useEffect(() => {
+    const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+  
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [sentStatusMessage, setSentStatusMessage] = useState("");

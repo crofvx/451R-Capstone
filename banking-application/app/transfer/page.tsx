@@ -81,6 +81,7 @@ export default function Transfer() {
         console.error("Transfer failed:", response.statusText, errorData);
 
         if (errorData?.message?.toLowerCase().includes("insufficient funds")) {
+          setModalTitle("Transfer Failed");
           setModalMessage(`Insufficient funds in ${transferData.sender} account`);
         } else {
           setModalMessage(errorData.message || response.statusText || "Transfer failed");
@@ -90,6 +91,7 @@ export default function Transfer() {
       }
     } catch (error) {
       console.error("Error:", error);
+      setModalTitle("Transfer Failed");
       setModalMessage("An error occurred. Please try again.");
       setShowModal(true);
     }

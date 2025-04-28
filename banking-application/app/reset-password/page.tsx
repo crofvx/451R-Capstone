@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Button, Label, Modal, TextInput } from "flowbite-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function ResetPassword() {
-  
+  const router = useRouter();
+    
+  useEffect(() => {
+    const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   const [resetPasswordData, setResetPasswordData] = useState({
     newPassword: "",
     confirmNewPassword: "",
@@ -15,7 +24,6 @@ export default function ResetPassword() {
   const [modalMessage, setModalMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 

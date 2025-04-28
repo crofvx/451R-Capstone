@@ -77,44 +77,40 @@ public class UserService {
 
 	public User authenticateUser(String email, String password) {
 		Optional<User> optionalUser = userRepository.findByEmail(email);
+		User user = optionalUser.orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-		if (optionalUser.isPresent()) {
-			User user = optionalUser.get();
-
-			if (passwordEncoder.matches(password, user.getPassword())) {
-				return user;
-			}
+		if (!passwordEncoder.matches(password, user.getPassword())) {
+			throw new IllegalArgumentException("Invalid username or password");
 		}
 
-		return null;
+		return user;
 	}
 
 	@Transactional
 	public void sendPasswordResetEmail(String email) {
-		User user = userRepository.findByEmail(email).orElse(null);
+		Optional<User> optionalUser = userRepository.findByEmail(email);
+		User user = optionalUser.orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-		if (user != null) {
-			String token = UUID.randomUUID().toString();
-			Date expiration = new Date(System.currentTimeMillis() + 3600000); // 1 hour expiration
+		String token = UUID.randomUUID().toString();
+		Date expiration = new Date(System.currentTimeMillis() + 3600000); // 1 hour expiration
 
-			PasswordResetToken resetToken = new PasswordResetToken(token, expiration, user.getUserId());
-			passwordResetTokenRepository.save(resetToken);
+		PasswordResetToken resetToken = new PasswordResetToken(token, expiration, user.getUserId());
+		passwordResetTokenRepository.save(resetToken);
 
-			passwordResetEmailService.sendEmail(user.getEmail(), token);
-		}
+		passwordResetEmailService.sendEmail(user.getEmail(), token);
 	}
 
 	@Transactional
 	public void resetPassword(String token, String newPassword) {
 		PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-				.orElseThrow(() -> new RuntimeException("Invalid token"));
+				.orElseThrow(() -> new IllegalArgumentException("Invalid token"));
 
 		if (resetToken.getExpiration().before(new Date())) {
-			throw new RuntimeException("Token expired");
+			throw new IllegalArgumentException("Token expired");
 		}
 
 		User user = userRepository.findById(resetToken.getUserId())
-				.orElseThrow(() -> new RuntimeException("User not found for token"));
+				.orElseThrow(() -> new IllegalArgumentException("User not found for token"));
 
 		user.setPassword(passwordEncoder.encode(newPassword));
 		userRepository.save(user);
@@ -124,24 +120,21 @@ public class UserService {
 	@Transactional
 	public void updateContactInfo(UUID userId, String newEmail, String newPhone, String newAddress) {
 		Optional<User> optionalUser = userRepository.findById(userId);
+		User user = optionalUser.orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-		if (optionalUser.isPresent()) {
-			User user = optionalUser.get();
-
-			if (!user.getEmail().equals(newEmail)) {
-				user.setEmail(newEmail);
-			}
-
-			if (!user.getPhone().equals(newPhone)) {
-				user.setPhone(newPhone);
-			}
-
-			if (!user.getAddress().equals(newAddress)) {
-				user.setAddress(newAddress);
-			}
-
-			userRepository.save(user);
+		if (!user.getEmail().equals(newEmail)) {
+			user.setEmail(newEmail);
 		}
+
+		if (!user.getPhone().equals(newPhone)) {
+			user.setPhone(newPhone);
+		}
+
+		if (!user.getAddress().equals(newAddress)) {
+			user.setAddress(newAddress);
+		}
+
+		userRepository.save(user);
 	}
 
 	@Transactional
@@ -151,16 +144,17 @@ public class UserService {
 		}
 
 		Optional<User> optionalUser = userRepository.findById(userId);
+		User user = optionalUser.orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-		if (optionalUser.isPresent()) {
-			User user = optionalUser.get();
-
-			if (passwordEncoder.matches(currentPassword, user.getPassword())
-					&& !passwordEncoder.matches(newPassword, user.getPassword())) {
-				user.setPassword(passwordEncoder.encode(newPassword));
-
-				userRepository.save(user);
-			}
+		if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+			throw new IllegalArgumentException("Invalid current password");
 		}
+
+		if (passwordEncoder.matches(newPassword, user.getPassword())) {
+			throw new IllegalArgumentException("New password must be different from current password");
+		}
+
+		user.setPassword(passwordEncoder.encode(newPassword));
+		userRepository.save(user);
 	}
 }
