@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Button, Modal } from "flowbite-react";
 import { useRouter } from 'next/navigation';
 import { Component } from "../components/budgetToolbar";
@@ -30,7 +29,8 @@ export default function SettingsPage() {
   });
 
   const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
+  const [modalHeader, setModalHeader] = useState("Update Failed");
+  const [modalMessage, setModalMessage] = useState("");
   
   const [newPasswordData, setNewPasswordData] = useState({
     currentPassword: "",
@@ -101,12 +101,13 @@ export default function SettingsPage() {
   
       if (response.ok) {
         console.log("Contact info updated successfully!");
+        setModalHeader("Update Successful")
         setModalMessage("Contact info updated successfully.");
         setShowModal(true);
       } else {
         console.error("Contact update failed:", response.statusText);
         const errorData = await response.json();
-        setModalMessage(errorData.message || response.statusText || "Contact update failed.");
+        setModalMessage(errorData.message || response.statusText || "Contact info update failed.");
         setShowModal(true);
       }
     } catch (error) {
@@ -120,12 +121,12 @@ export default function SettingsPage() {
     e.preventDefault();
 
     if (!passwordPattern.test(newPasswordData.newPassword)) {
-      setPasswordError("Password must be at least 8 characters, with a number and special character.");
+      setPasswordError("Password must be at least 12 characters, with an uppercase letter, a lowercase letter, a number, and a special character.");
       return;
     }
   
     if (newPasswordData.newPassword !== newPasswordData.confirmPassword) {
-      setPasswordError("Passwords do not match.");
+      setConfirmPasswordError("Passwords do not match.");
       return;
     }
 
@@ -144,6 +145,7 @@ export default function SettingsPage() {
   
       if (response.ok) {
         console.log("Password updated successfully!");
+        setModalHeader("Update Successful");
         setModalMessage("Password updated successfully.");
         setShowModal(true);
       } else {
@@ -186,7 +188,7 @@ export default function SettingsPage() {
             </h2>
             {!showContactForm && (
               <p className="text-gray-700 mt-2 text-sm">
-                Edit your Email, Phone Number, and Billing Address
+                Edit your Email, Phone Number, and Mailing Address
               </p>
             )}
           </div>
@@ -220,6 +222,7 @@ export default function SettingsPage() {
                     id="phone"
                     name="phone"
                     placeholder="5551234567"
+                    minLength={10}
                     maxLength={10}
                     pattern="^\d+$"
                     className="w-full border border-gray-300 rounded-md p-2"
@@ -230,13 +233,13 @@ export default function SettingsPage() {
 
                 <div>
                   <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                    Billing Address
+                    Mailing Address
                   </label>
                   <input
                     type="text"
                     id="address"
                     name="address"
-                    placeholder="123 Main St, City, State"
+                    placeholder="123 Main St, City, State, ZIP"
                     maxLength={150}
                     className="w-full border border-gray-300 rounded-md p-2"
                     required
@@ -353,18 +356,17 @@ export default function SettingsPage() {
 
         </div>
 
-          <Modal show={showModal} onClose={() => setShowModal(false)}>
-                    <Modal.Header>Update Settings</Modal.Header>
-          
-                    <Modal.Body>
-                      <p>{modalMessage}</p>
-                    </Modal.Body>
-          
-                    <Modal.Footer>
-                      <Button className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue" onClick={() => setShowModal(false)}>OK</Button>
-                    </Modal.Footer>
-                  </Modal>
+        <Modal show={showModal} onClose={() => setShowModal(false)}>
+          <Modal.Header>{modalHeader}</Modal.Header>
 
+          <Modal.Body>
+            <p>{modalMessage}</p>
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue" onClick={() => setShowModal(false)}>OK</Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
   );

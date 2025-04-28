@@ -1,11 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Button, Label, Modal, TextInput } from "flowbite-react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Register() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -21,8 +31,6 @@ export default function Register() {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [modalMessage, setModalMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
-
-  const router = useRouter();
 
   const today = new Date();
   const minAgeBirthDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0];
@@ -78,6 +86,24 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (formData.email) {
+      try {
+        const response = await fetch(`http://localhost:8080/api/users/check-email?email=${encodeURIComponent(formData.email)}`);
+        const data = await response.json();
+        
+        // email address already used
+        if (data.taken) {
+          setEmailError("Email address is already taken.");
+          return;
+        } else {
+          setEmailError("");
+        }
+      } catch (error) {
+        console.error("Error checking email:", error);
+        setEmailError("An error occurred. Please try again.");
+      }
+    }
+
     if (!passwordPattern.test(formData.password)) {
       setPasswordError("Password does not meet requirements");
       return;
@@ -107,7 +133,7 @@ export default function Register() {
 
       if (response.ok) {
         console.log("User registered successfully!");
-        router.push('/dashboard');
+        router.push('/');
       } else {
         console.error("Registration failed:", response.statusText);
         const errorData = await response.json();
@@ -156,7 +182,7 @@ export default function Register() {
 
             <div>
               <Label htmlFor="phone" value="Phone*:" />
-              <TextInput id="phone" name="phone" type="tel" placeholder="5551234567" maxLength={10} pattern="^\d+$" required onChange={handleInputChange} />
+              <TextInput id="phone" name="phone" type="tel" placeholder="5551234567" minLength={10} maxLength={10} pattern="^\d+$" required onChange={handleInputChange} />
             </div>
 
             <div>

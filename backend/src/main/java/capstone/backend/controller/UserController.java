@@ -51,13 +51,12 @@ public class UserController {
 		String email = credentials.get("email");
 		String password = credentials.get("password");
 
-		User authenticatedUser = userService.authenticateUser(email, password);
-
-		if (authenticatedUser != null) {
+		try {
+			User authenticatedUser = userService.authenticateUser(email, password);
 			String jwt = jwtUtils.generateJwtToken(authenticatedUser.getUserId().toString(), email);
 			return ResponseEntity.ok(Map.of("message", "Login successful", "token", jwt));
-		} else {
-			return ResponseEntity.badRequest().body(Map.of("message", "Invalid email or password"));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
 		}
 	}
 
@@ -66,8 +65,12 @@ public class UserController {
 		String email = emailData.get("email");
 
 		if (StringUtils.hasText(email)) {
-			userService.sendPasswordResetEmail(email);
-			return ResponseEntity.ok(Map.of("message", "Password reset email sent"));
+			try {
+				userService.sendPasswordResetEmail(email);
+				return ResponseEntity.ok(Map.of("message", "Password reset email sent"));
+			} catch (IllegalArgumentException e) {
+				return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+			}
 		} else {
 			return ResponseEntity.badRequest().body(Map.of("message", "Email is required"));
 		}
@@ -79,8 +82,12 @@ public class UserController {
 		String newPassword = newPasswordData.get("newPassword");
 
 		if (StringUtils.hasText(resetToken) && StringUtils.hasText(newPassword)) {
-			userService.resetPassword(resetToken, newPassword);
-			return ResponseEntity.ok(Map.of("message", "Password reset"));
+			try {
+				userService.resetPassword(resetToken, newPassword);
+				return ResponseEntity.ok(Map.of("message", "Password reset"));
+			} catch (IllegalArgumentException e) {
+				return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+			}
 		} else {
 			return ResponseEntity.badRequest().body(Map.of("message", "Reset token and new password are required"));
 		}
@@ -99,15 +106,18 @@ public class UserController {
 				String phone = newContactData.get("phone");
 				String address = newContactData.get("address");
 
-				userService.updateContactInfo(userId, email, phone, address);
-
-				return ResponseEntity.ok(Map.of("message", "Contact Reset"));
+				try {
+					userService.updateContactInfo(userId, email, phone, address);
+					return ResponseEntity.ok(Map.of("message", "Contact info updated"));
+				} catch (IllegalArgumentException e) {
+					return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+				}
 			} else {
-				return ResponseEntity.badRequest().body(Map.of("message", "User not found."));
+				return ResponseEntity.badRequest().body(Map.of("message", "User not found"));
 			}
 		}
-		
-		return ResponseEntity.badRequest().body(Map.of("message", "Error occurred."));
+
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
 	}
 
 	@PostMapping("/update-password")
@@ -122,14 +132,17 @@ public class UserController {
 				String currentPassword = newPasswordData.get("currentPassword");
 				String newPassword = newPasswordData.get("newPassword");
 
-				userService.updatePassword(userId, currentPassword, newPassword);
-
-				return ResponseEntity.ok(Map.of("message", "Password Reset"));
+				try {
+					userService.updatePassword(userId, currentPassword, newPassword);
+					return ResponseEntity.ok(Map.of("message", "Password updated"));
+				} catch (IllegalArgumentException e) {
+					return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+				}
 			} else {
-				return ResponseEntity.badRequest().body(Map.of("message", "Error occurred."));
+				return ResponseEntity.badRequest().body(Map.of("message", "User not found"));
 			}
 		}
-		
-		return ResponseEntity.badRequest().body(Map.of("message", "Failed"));
+
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
 	}
 }
