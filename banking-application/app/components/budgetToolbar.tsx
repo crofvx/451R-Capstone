@@ -55,6 +55,11 @@ export function Component() {
   });
   const currentPage = usePathname();
 
+  const handleLogout = () => {
+    sessionStorage.clear();
+    localStorage.clear();
+  };
+
   return (
     <div className="fixed top-0 left-0 w-full z-50 bg-white dark:bg-gray-900">
       <Navbar className="h-16 shadow-lg" fluid rounded theme = {newNavbarTheme.navbar}>
@@ -76,7 +81,7 @@ export function Component() {
             <DropdownItem href="/dashboard">Dashboard</DropdownItem>
             <DropdownItem href="/settings">Settings</DropdownItem>
             <DropdownDivider />
-            <DropdownItem href="/">Sign out</DropdownItem>
+            <DropdownItem href="/" onClick={handleLogout}>Sign out</DropdownItem>
           </Dropdown>
           <NavbarToggle />
         </div>
