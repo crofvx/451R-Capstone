@@ -1,3 +1,5 @@
+
+
 'use client';
 
 /*
@@ -123,6 +125,46 @@ const ExpensesPage = () => {
     const [userToken, setUserToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const [expenses, setExpenses] = useState<{ id: string; name: string; value: number }[]>([]);
+    const [newCategory, setNewCategory] = useState("");
+    const [newAmount, setNewAmount] = useState("");
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [editedCategory, setEditedCategory] = useState("");
+    const [editedAmount, setEditedAmount] = useState("");
+
+    const COLORS = ["#4CAF50", "#81C784", "#388E3C", "#A5D6A7", "#2E7D32"];
+    const LOCAL_STORAGE_KEY = "budget_expenses";
+
+    const [isClient, setIsClient] = useState(false);
+
+    const fetchExpenses = async (token: string) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/budgets`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+    
+            if (!response.ok) {
+                console.error("Failed to fetch expenses");
+                return;
+            }
+    
+            const data = await response.json();
+            console.log("Fetched budgets:", data); // DEBUG: See what backend sends
+    
+            const parsedExpenses = data.map((item: any) => ({
+                id: item.budgetId,
+                name: item.category,
+                value: item.allocatedAmount,
+            }));
+    
+            setExpenses(parsedExpenses);
+        } catch (error) {
+            console.error("Error fetching expenses:", error);
+        }
+    };
+
 
     useEffect(() => {
         const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
@@ -132,56 +174,71 @@ const ExpensesPage = () => {
         } else {
             setUserToken(token);
             setLoading(false);
+            fetchExpenses(token);
         }
     }, [router]);
 
-    if (loading) {
-        return null;
-    }
-
-    const COLORS = ["#4CAF50", "#81C784", "#388E3C", "#A5D6A7", "#2E7D32"];
-    const LOCAL_STORAGE_KEY = "budget_expenses";
-
-    const [isClient, setIsClient] = useState(false);
-
+    
     useEffect(() => {
         setIsClient(true);
     }, []);
 
-    const [expenses, setExpenses] = useState<{ name: string; value: number }[]>([]);
-    const [newCategory, setNewCategory] = useState("");
-    const [newAmount, setNewAmount] = useState("");
-    const [editingIndex, setEditingIndex] = useState<number | null>(null);
-    const [editedCategory, setEditedCategory] = useState("");
-    const [editedAmount, setEditedAmount] = useState("");
-
-    // Load from localStorage on mount
-    useEffect(() => {
-        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (saved) {
-            setExpenses(JSON.parse(saved));
-        } else {
-            setExpenses([
-                { name: "Rent", value: 1000 },
-                { name: "Groceries", value: 300 },
-                { name: "Utilities", value: 150 },
-            ]);
-        }
-    }, []);
 
     // Save to localStorage whenever expenses change
     useEffect(() => {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expenses));
     }, [expenses]);
 
-    const handleAddExpense = () => {
-        if (!newCategory || !newAmount) return;
+    const handleAddExpense = async () => {
+        console.log(newCategory)
+        console.log(newAmount)
+        if (!newCategory || !newAmount || !userToken) {
+            console.error("Missing category, amount, or userToken");
+            return;
+        }
+    
         const amount = parseFloat(newAmount);
-        if (isNaN(amount) || amount <= 0) return;
-        setExpenses((prev) => [...prev, { name: newCategory, value: amount }]);
-        setNewCategory("");
-        setNewAmount("");
+        if (isNaN(amount) || amount <= 0) {
+            console.error("Invalid amount entered");
+            return;
+        }
+    
+        try {
+            const response = await fetch("http://localhost:8080/api/budgets", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`,
+                },
+                body: JSON.stringify({
+                    category: newCategory.toLowerCase(), 
+                    month: new Date().getMonth() + 1,
+                    year: new Date().getFullYear(),
+                    allocatedAmount: amount
+                })
+            });
+    
+            console.log("POST response status:", response.status);
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Backend error:", errorData);
+                throw new Error("Failed to save budget");
+            }
+    
+            console.log("Budget added successfully!");
+
+            await fetchExpenses(userToken);
+    
+            // Update local state with the newly created budget
+            setNewCategory("");
+            setNewAmount("");
+        } catch (error) {
+            console.error("Error adding expense:", error);
+        }
     };
+    
+    
 
     const handleCategoryChange = (text: { target: { value: SetStateAction<string>; }; }) => {
         setNewCategory(text.target.value);
@@ -191,8 +248,29 @@ const ExpensesPage = () => {
         setNewAmount(number.target.value)
     }
 
-    const handleDeleteExpense = (index: number) => {
-        setExpenses((prev) => prev.filter((_, i) => i !== index));
+    const handleDeleteExpense = async (index: number) => {
+        if (!userToken) return;
+    
+        const budgetToDelete = expenses[index];
+    
+        try {
+            const response = await fetch(`http://localhost:8080/api/budgets/${budgetToDelete.id}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${userToken}`,
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error("Failed to delete budget");
+            }
+    
+            // After success, re-fetch budgets
+            fetchExpenses(userToken);
+    
+        } catch (error) {
+            console.error("Error deleting budget:", error);
+        }
     };
 
     const handleEditExpense = (index: number) => {
@@ -202,21 +280,41 @@ const ExpensesPage = () => {
         setEditedAmount(expenseToEdit.value.toString());
     };
 
-    const handleSaveEdit = () => {
-        if (editingIndex === null) return;
+    const handleSaveEdit = async () => {
+        if (editingIndex === null || !userToken) return;
         const amount = parseFloat(editedAmount);
         if (isNaN(amount) || amount <= 0) return;
-
-        const updatedExpenses = [...expenses];
-        updatedExpenses[editingIndex] = {
-            name: editedCategory,
-            value: amount,
-        };
-
-        setExpenses(updatedExpenses);
-        setEditingIndex(null);
-        setEditedCategory("");
-        setEditedAmount("");
+    
+        const budgetToUpdate = expenses[editingIndex];
+    
+        try {
+            const response = await fetch(`http://localhost:8080/api/budgets/${budgetToUpdate.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${userToken}`,
+                },
+                body: JSON.stringify({
+                    allocatedAmount: amount,
+                    category: editedCategory,
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error("Failed to update budget");
+            }
+    
+            // After success, re-fetch budgets from server
+            fetchExpenses(userToken);
+    
+            // Reset editing state
+            setEditingIndex(null);
+            setEditedCategory("");
+            setEditedAmount("");
+    
+        } catch (error) {
+            console.error("Error saving budget:", error);
+        }
     };
 
     const formatCurrency = (value: number) =>
@@ -283,14 +381,14 @@ const ExpensesPage = () => {
                                         <option disabled selected value="">
                                             -- Select a category --
                                         </option>
-                                        <option>Housing/Utilities</option>
-                                        <option>Transportation</option>
-                                        <option>Food</option>
-                                        <option>Healthcare</option>
-                                        <option>Debt</option>
-                                        <option>Savings</option>
-                                        <option>Personal</option>    
-                                        <option>Miscellaneous</option>   
+                                        <option value= "housing">Housing/Utilities</option>
+                                        <option value = "transportation">Transportation</option>
+                                        <option value = "food">Food</option>
+                                        <option value = "healthcare">Healthcare</option>
+                                        <option value = "debt">Debt</option>
+                                        <option value = "savings">Savings</option>
+                                        <option value = "personal">Personal</option>    
+                                        <option value = "miscellaneous">Miscellaneous</option>   
                                     </Select>
                                     {/**                                     <input
                                         type="text"

@@ -31,9 +31,6 @@ export default function InsightsPage() {
     }
   }, [router]);
   
-  if (loading) {
-    return null;
-  }
 
   const [cards, setCards] = useState([
     {
@@ -121,7 +118,7 @@ export default function InsightsPage() {
       <Component />
       {/* Back button */}
       <button
-        className="absolute top-6 left-6 bg-white text-green-800 px-4 py-2 rounded shadow hover:bg-gray-100"
+        className="relative top-6 left-6 bg-white text-green-800 px-4 py-2 rounded shadow hover:bg-gray-100"
         onClick={() => router.push("/budget_dashboard")}
       >
         ⬅ Back
@@ -159,7 +156,7 @@ export default function InsightsPage() {
         {/* Budget Progress Bar */}
         <div className="bg-green-700 text-white px-6 py-4 rounded-2xl flex items-center justify-between">
           <div>
-            <p className="text-sm">Budget Overview</p>
+            <p className="text-sm">Income Overview</p>
             <div className="mt-2 bg-white rounded-full h-2 w-64">
               <div className="bg-green-900 h-2 rounded-full" style={{ width: "66%" }} />
             </div>

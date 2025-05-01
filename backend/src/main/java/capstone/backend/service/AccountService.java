@@ -1,7 +1,9 @@
 package capstone.backend.service;
 
 import java.security.SecureRandom;
+import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -56,5 +58,9 @@ public class AccountService {
 		long range = max - min + 1;
 		long randomBalance = (long) (random.nextDouble() * range) + min;
 		return randomBalance;
+	}
+	
+	public Optional<Account> getAccountByUserIdAndType(UUID userId, String accountType) {
+	    return accountRepository.findByUserIdAndAccountType(userId, accountType);
 	}
 }
