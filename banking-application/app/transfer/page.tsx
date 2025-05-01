@@ -8,6 +8,7 @@ import { Component } from "../components/budgetToolbar";
 
 export default function Transfer() {
   const [userToken, setUserToken] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const router = useRouter();
   
@@ -20,6 +21,9 @@ export default function Transfer() {
       setUserToken(token);
     }
   }, [router]);
+
+
+
 
   const [view, setView] = useState("transferMoney"); // "home", "payBills", "transferMoney"
   const [transferData, setTransferData] = useState({
@@ -108,7 +112,7 @@ export default function Transfer() {
   );
 
   return (
-    <main className="w-screen h-screen flex items-center justify-center bg-dark-green relative">
+    <main className="w-screen h-screen flex items-center justify-center relative">
       <Component/>
       {view === "home" && (
         <div className="flex flex-wrap justify-center gap-16">

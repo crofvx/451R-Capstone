@@ -1,46 +1,44 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Button, Modal } from "flowbite-react";
+import { Alert, Button, Modal, Card, createTheme } from "flowbite-react";
 import { useRouter } from 'next/navigation';
 import { Component } from "../components/budgetToolbar";
 
+const newCardTheme = createTheme({
+  card: {
+    root: {
+      base: "flex flex-col rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800",
+      children: "flex flex-col gap-4 p-6",
+    },
+  },
+});
+
 export default function SettingsPage() {
   const [userToken, setUserToken] = useState("");
-  
   const router = useRouter();
-  
+
   useEffect(() => {
-    const token = localStorage.getItem('jwt') || sessionStorage.getItem('jwt');
+    const token = localStorage.getItem("jwt") || sessionStorage.getItem("jwt");
     if (!token) {
-      router.push('/');
+      router.push("/");
     } else {
       setUserToken(token);
     }
   }, [router]);
 
-
   const [showContactForm, setShowContactForm] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [contactData, setContactData] = useState({
-    email: "",
-    phone: "",
-    address: "",
-  });
+  const [contactData, setContactData] = useState({ email: "", phone: "", address: "" });
+  const [newPasswordData, setNewPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [modalHeader, setModalHeader] = useState("Update Failed");
   const [modalMessage, setModalMessage] = useState("");
-  
-  const [newPasswordData, setNewPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
 
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const passwordPattern = new RegExp(`^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()\\-+=_~\`\\[\\]{}:;'"<,>.?/]).{12,}$`);
 
   const handleContactInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,42 +47,29 @@ export default function SettingsPage() {
   };
 
   const handleCurrentPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setNewPasswordData({ ...newPasswordData, currentPassword: value });
+    setNewPasswordData({ ...newPasswordData, currentPassword: e.target.value });
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNewPasswordData({ ...newPasswordData, newPassword: value });
- 
-    if (value && !passwordPattern.test(value)) {
-      setPasswordError("Password does not meet requirements");
-    } else {
-      setPasswordError("");
-    }
+    setPasswordError(!passwordPattern.test(value) ? "Password does not meet requirements" : "");
   };
- 
+
   const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNewPasswordData({ ...newPasswordData, confirmPassword: value });
- 
-    if (value && value !== newPasswordData.newPassword) {
-      setConfirmPasswordError("Passwords do not match");
-    } else {
-      setConfirmPasswordError("");
-    }
+    setConfirmPasswordError(value !== newPasswordData.newPassword ? "Passwords do not match" : "");
   };
 
   const handleContactFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-  
-    // Basic validation (you can expand this if needed)
     if (!contactData.email || !contactData.phone || !contactData.address) {
       setModalMessage("Please complete all required contact fields.");
       setShowModal(true);
       return;
     }
-  
+
     try {
       const response = await fetch("http://localhost:8080/api/users/update-contact", {
         method: "POST",
@@ -92,39 +77,27 @@ export default function SettingsPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${userToken}`,
         },
-        body: JSON.stringify({
-          email: contactData.email,
-          phone: contactData.phone,
-          address: contactData.address,
-        }),
+        body: JSON.stringify(contactData),
       });
-  
-      if (response.ok) {
-        console.log("Contact info updated successfully!");
-        setModalHeader("Update Successful")
-        setModalMessage("Contact info updated successfully.");
-        setShowModal(true);
-      } else {
-        console.error("Contact update failed:", response.statusText);
-        const errorData = await response.json();
-        setModalMessage(errorData.message || response.statusText || "Contact info update failed.");
-        setShowModal(true);
-      }
-    } catch (error) {
-      console.error("Error:", error);
+
+      const result = await response.json();
+      setModalHeader(response.ok ? "Update Successful" : "Update Failed");
+      setModalMessage(result.message || "Contact info update result unknown.");
+      setShowModal(true);
+    } catch {
+      setModalHeader("Error");
       setModalMessage("Something went wrong. Please try again.");
       setShowModal(true);
     }
   };
-  
+
   const handlePasswordFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     if (!passwordPattern.test(newPasswordData.newPassword)) {
-      setPasswordError("Password must be at least 12 characters, with an uppercase letter, a lowercase letter, a number, and a special character.");
+      setPasswordError("Password does not meet requirements.");
       return;
     }
-  
+
     if (newPasswordData.newPassword !== newPasswordData.confirmPassword) {
       setConfirmPasswordError("Passwords do not match.");
       return;
@@ -142,232 +115,119 @@ export default function SettingsPage() {
           newPassword: newPasswordData.newPassword,
         }),
       });
-  
-      if (response.ok) {
-        console.log("Password updated successfully!");
-        setModalHeader("Update Successful");
-        setModalMessage("Password updated successfully.");
-        setShowModal(true);
-      } else {
-        console.error("Password update failed:", response.statusText);
-        const errorData = await response.json();
-        setModalMessage(errorData.message || response.statusText || "Password update failed.");
-        setShowModal(true);
-      }
-    } catch (error) {
-      console.error("Error:", error);
+
+      const result = await response.json();
+      setModalHeader(response.ok ? "Update Successful" : "Update Failed");
+      setModalMessage(result.message || "Password update result unknown.");
+      setShowModal(true);
+    } catch {
+      setModalHeader("Error");
       setModalMessage("Something went wrong. Please try again.");
       setShowModal(true);
     }
   };
-  
-  return (
-    <div className="min-h-screen bg-white flex flex-col">
-      
-      {/* ✅ Top Navigation Bar */}
-      <nav className="w-full py-4 px-8">
-        <Component/>
-      </nav>
 
-      {/* ✅ Header Section */}
-      <div className="bg-gray-100 py-12 px-8">
-        <h1 className="text-5xl font-bold text-[#245C3E]">Settings</h1>
+  return (
+    <div className="bg-white dark:bg-gray-900 min-h-screen">
+      <div className="fixed top-0 left-0 w-full z-50">
+        <Component />
       </div>
 
-      {/* ✅ Settings Content Area */}
-      <div className="flex justify-center bg-[#245C3E] py-16 px-4">
-        <div className="w-full max-w-3xl space-y-6">
+      {/* Page Header */}
+      <div className="pt-28 px-6 flex flex-col items-center justify-center space-y-6">
+        <h1 className="text-3xl font-bold text-[#1d4d34] dark:text-white text-left w-full max-w-5xl px-2 mb-4">
+          Settings
+        </h1>
+      </div>
 
-          {/* 🔽 Contact Info Dropdown Toggle */}
-          <div
-            className="bg-white rounded-xl shadow-md p-6 cursor-pointer"
-            onClick={() => setShowContactForm(!showContactForm)}
-          >
-            <h2 className="text-xl font-semibold text-black">
-              {showContactForm ? "Update" : "Update"} Contact Information
-            </h2>
+      {/* Content */}
+      <div className="px-6 py-16 flex justify-center">
+        <div className="w-full max-w-5xl space-y-6">
+
+          {/* Contact Info Toggle */}
+          <Card className="cursor-pointer hover:shadow-xl" theme={newCardTheme.card} onClick={() => setShowContactForm(!showContactForm)}>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Update Contact Information</h2>
             {!showContactForm && (
-              <p className="text-gray-700 mt-2 text-sm">
+              <p className="text-gray-700 dark:text-gray-300 mt-2 text-sm">
                 Edit your Email, Phone Number, and Mailing Address
               </p>
             )}
-          </div>
+          </Card>
 
-          {/* 📄 Contact Info Form */}
           {showContactForm && (
-            <div className="bg-white rounded-xl shadow-inner p-6 border border-gray-200">
+            <Card theme={newCardTheme.card}>
               <form className="space-y-4" onSubmit={handleContactFormSubmit}>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    maxLength={254}
-                    placeholder="you@example.com"
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    required
-                    onChange={handleContactInputChange}
-                  />
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-white mb-1">Email Address</label>
+                  <input type="email" name="email" id="email" placeholder="you@example.com" className="w-full border border-gray-300 rounded-md p-2" required onChange={handleContactInputChange} />
                 </div>
-
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    placeholder="5551234567"
-                    minLength={10}
-                    maxLength={10}
-                    pattern="^\d+$"
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    required
-                    onChange={handleContactInputChange}
-                  />
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-white mb-1">Phone Number</label>
+                  <input type="tel" name="phone" id="phone" placeholder="5551234567" pattern="^\d{10}$" className="w-full border border-gray-300 rounded-md p-2" required onChange={handleContactInputChange} />
                 </div>
-
                 <div>
-                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                    Mailing Address
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    placeholder="123 Main St, City, State, ZIP"
-                    maxLength={150}
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    required
-                    onChange={handleContactInputChange}
-                  />
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-white mb-1">Mailing Address</label>
+                  <input type="text" name="address" id="address" placeholder="123 Main St" className="w-full border border-gray-300 rounded-md p-2" required onChange={handleContactInputChange} />
                 </div>
-
-                <button
-                  type="submit"
-                  className="bg-[#245C3E] text-white px-6 py-2 rounded-md hover:bg-[#1d4d34] transition"
-                >
-                  Save Changes
-                </button>
+                <Button type="submit" className="bg-[#245C3E] hover:bg-[#1d4d34] text-white">Save Changes</Button>
               </form>
-            </div>
+            </Card>
           )}
 
-          {/* 🔽 Password Reset Toggle */}
-          <div
-            className="bg-white rounded-xl shadow-md p-6 cursor-pointer"
-            onClick={() => setShowPasswordForm(!showPasswordForm)}
-          >
-            <h2 className="text-xl font-semibold text-black">
-              {showPasswordForm ? "Reset" : "Reset"} Password
-            </h2>
+          {/* Password Reset Toggle */}
+          <Card className="cursor-pointer hover:shadow-xl" theme={newCardTheme.card} onClick={() => setShowPasswordForm(!showPasswordForm)}>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Reset Password</h2>
             {!showPasswordForm && (
-              <p className="text-gray-700 mt-2 text-sm">
-                Change your password securely
-              </p>
+              <p className="text-gray-700 dark:text-gray-300 mt-2 text-sm">Change your password securely</p>
             )}
-          </div>
+          </Card>
 
-          {/* 🔐 Password Reset Form */}
           {showPasswordForm && (
-            <div className="bg-white rounded-xl shadow-inner p-6 border border-gray-200">
+            <Card theme={newCardTheme.card}>
               <form className="space-y-4" onSubmit={handlePasswordFormSubmit}>
                 <div>
-                  <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    id="currentPassword"
-                    name="currentPassword"
-                    placeholder="Enter current password"
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    required
-                    onChange={handleCurrentPasswordChange}
-                  />
+                  <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-white mb-1">Current Password</label>
+                  <input type="password" id="currentPassword" name="currentPassword" className="w-full border border-gray-300 rounded-md p-2" required onChange={handleCurrentPasswordChange} />
                 </div>
-
                 <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    id="newPassword"
-                    name="newPassword"
-                    placeholder="Enter new password"
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    onChange={handlePasswordChange}
-                    maxLength={128}
-                    required
-                  />
+                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-white mb-1">New Password</label>
+                  <input type="password" id="newPassword" name="newPassword" className="w-full border border-gray-300 rounded-md p-2" required onChange={handlePasswordChange} />
                 </div>
-
-                {passwordError &&
-              <Alert color="failure">
-                <p className="font-medium">Password does not meet requirements</p>
-                <br></br>
-                <p>Password Requirements:</p>
-                <ul className="list-disc list-inside">
-                  <li>At least 12 characters</li>
-                  <li>An uppercase letter</li>
-                  <li>A lowercase letter</li>
-                  <li>A number</li>
-                  <li>A special character</li>
-                </ul>
-              </Alert>
-            }
-
+                {passwordError && (
+                  <Alert color="failure">
+                    <p className="font-medium">Password does not meet requirements</p>
+                    <ul className="list-disc list-inside mt-2 text-sm">
+                      <li>At least 12 characters</li>
+                      <li>Uppercase and lowercase letters</li>
+                      <li>At least one number</li>
+                      <li>At least one special character</li>
+                    </ul>
+                  </Alert>
+                )}
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    placeholder="Re-enter new password"
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    onChange={handleConfirmPasswordChange}
-                    maxLength={128}
-                    required
-                  />
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-white mb-1">Confirm New Password</label>
+                  <input type="password" id="confirmPassword" name="confirmPassword" className="w-full border border-gray-300 rounded-md p-2" required onChange={handleConfirmPasswordChange} />
                 </div>
-
-                {confirmPasswordError &&
-              <Alert color="failure">
-                <p className="font-medium">Passwords do not match</p>
-              </Alert>
-            }
-
-                <button
-                  type="submit"
-                  className="bg-[#245C3E] text-white px-6 py-2 rounded-md hover:bg-[#1d4d34] transition"
-                >
-                  Reset Password
-                </button>
+                {confirmPasswordError && (
+                  <Alert color="failure">
+                    <p className="font-medium">Passwords do not match</p>
+                  </Alert>
+                )}
+                <Button type="submit" className="bg-[#245C3E] hover:bg-[#1d4d34] text-white">Reset Password</Button>
               </form>
-            </div>
+            </Card>
           )}
-
         </div>
-
-        <Modal show={showModal} onClose={() => setShowModal(false)}>
-          <Modal.Header>{modalHeader}</Modal.Header>
-
-          <Modal.Body>
-            <p>{modalMessage}</p>
-          </Modal.Body>
-
-          <Modal.Footer>
-            <Button className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue" onClick={() => setShowModal(false)}>OK</Button>
-          </Modal.Footer>
-        </Modal>
       </div>
+
+      {/* Modal */}
+      <Modal show={showModal} onClose={() => setShowModal(false)}>
+        <Modal.Header>{modalHeader}</Modal.Header>
+        <Modal.Body><p>{modalMessage}</p></Modal.Body>
+        <Modal.Footer>
+          <Button onClick={() => setShowModal(false)} className="bg-blue-500 hover:bg-blue-600 text-white">OK</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

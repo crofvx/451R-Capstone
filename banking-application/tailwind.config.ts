@@ -12,6 +12,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        primary: "#016747",
         "dark-green": "#016747",
         "light-green": "#78BE21",
         "yellow": "#FFD007",
