@@ -49,12 +49,14 @@ export default function Transfer() {
     e.preventDefault();
 
     if (transferData.receiver === transferData.sender) {
+      setModalTitle("Transfer Failed");
       setModalMessage("From account and to account must be different");
       setShowModal(true);
       return;
     }
 
     if (isNaN(+transferData.amount) || +transferData.amount <= 0) {
+      setModalTitle("Transfer Failed");
       setModalMessage(`${transferData.amount} is an invalid amount`);
       setShowModal(true);
       return;
@@ -88,6 +90,7 @@ export default function Transfer() {
           setModalTitle("Transfer Failed");
           setModalMessage(`Insufficient funds in ${transferData.sender} account`);
         } else {
+          setModalTitle("Transfer Failed");
           setModalMessage(errorData.message || response.statusText || "Transfer failed");
         }
 

@@ -36,7 +36,7 @@ export default function SettingsPage() {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
   const [showModal, setShowModal] = useState(false);
-  const [modalHeader, setModalHeader] = useState("Update Failed");
+  const [modalTitle, setModalTitle] = useState("Update Failed");
   const [modalMessage, setModalMessage] = useState("");
 
   const passwordPattern = new RegExp(`^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()\\-+=_~\`\\[\\]{}:;'"<,>.?/]).{12,}$`);
@@ -65,6 +65,7 @@ export default function SettingsPage() {
   const handleContactFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!contactData.email || !contactData.phone || !contactData.address) {
+      setModalTitle("Update Failed");
       setModalMessage("Please complete all required contact fields.");
       setShowModal(true);
       return;
@@ -81,11 +82,11 @@ export default function SettingsPage() {
       });
 
       const result = await response.json();
-      setModalHeader(response.ok ? "Update Successful" : "Update Failed");
+      setModalTitle(response.ok ? "Update Successful" : "Update Failed");
       setModalMessage(result.message || "Contact info update result unknown.");
       setShowModal(true);
     } catch {
-      setModalHeader("Error");
+      setModalTitle("Error");
       setModalMessage("Something went wrong. Please try again.");
       setShowModal(true);
     }
@@ -117,11 +118,11 @@ export default function SettingsPage() {
       });
 
       const result = await response.json();
-      setModalHeader(response.ok ? "Update Successful" : "Update Failed");
+      setModalTitle(response.ok ? "Update Successful" : "Update Failed");
       setModalMessage(result.message || "Password update result unknown.");
       setShowModal(true);
     } catch {
-      setModalHeader("Error");
+      setModalTitle("Error");
       setModalMessage("Something went wrong. Please try again.");
       setShowModal(true);
     }
@@ -222,7 +223,7 @@ export default function SettingsPage() {
 
       {/* Modal */}
       <Modal show={showModal} onClose={() => setShowModal(false)}>
-        <Modal.Header>{modalHeader}</Modal.Header>
+        <Modal.Header>{modalTitle}</Modal.Header>
         <Modal.Body><p>{modalMessage}</p></Modal.Body>
         <Modal.Footer>
           <Button onClick={() => setShowModal(false)} className="bg-blue-500 hover:bg-blue-600 text-white">OK</Button>
