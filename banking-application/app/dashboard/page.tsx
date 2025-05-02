@@ -11,6 +11,7 @@ import {
   ArcElement,
   Tooltip,
   Legend,
+  ChartOptions,
 } from 'chart.js';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -159,7 +160,7 @@ export default function BudgetingHome() {
     ],
   };
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<'doughnut'> = {
     responsive: true,
     animation: {
       animateRotate: true,
@@ -230,6 +231,7 @@ export default function BudgetingHome() {
           {/* Expenses */}
           <Card className="flex-1 min-h-[350px] cursor-pointer hover:shadow-lg transition relative"
             theme={newCardTheme.card}
+            onClick={() => router.push('/budget_expenses')}
           >
             <div className="flex items-center justify-between">
               <h5 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">

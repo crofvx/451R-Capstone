@@ -96,7 +96,7 @@ export function Component() {
           <Dropdown label="My Profile" dismissOnClick={false} arrowIcon={true} pill>
             <DropdownHeader className="top-7 bottom-36">
               {/*<span className="block text-sm">My Account</span>*/}
-              <span className="block truncate text-sm font-medium">{decoded.sub}</span>
+              <span className="block truncate text-sm font-medium">{decoded?.sub}</span>
             </DropdownHeader>
             <DropdownItem href="/dashboard">Dashboard</DropdownItem>
             <DropdownItem href="/settings">Settings</DropdownItem>
