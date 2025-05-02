@@ -105,7 +105,7 @@ export default function expensesDonut() {
 
 import { useState, useEffect, SetStateAction } from "react";
 import { Component } from "../components/budgetToolbar";
-import { Label, Select, TextInput, Button} from "flowbite-react";
+import { Label, Select, TextInput, Button, Modal} from "flowbite-react";
 import { useRouter } from "next/navigation";
 
 
@@ -131,6 +131,9 @@ const ExpensesPage = () => {
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [editedCategory, setEditedCategory] = useState("");
     const [editedAmount, setEditedAmount] = useState("");
+    const [modalTitle, setModalTitle] = useState("");
+    const [modalMessage, setModalMessage] = useState("");
+    const [showModal, setShowModal] = useState(false);
 
     const COLORS = ["#4CAF50", "#81C784", "#388E3C", "#A5D6A7", "#2E7D32"];
     const LOCAL_STORAGE_KEY = "budget_expenses";
@@ -189,9 +192,9 @@ const ExpensesPage = () => {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expenses));
     }, [expenses]);
 
-    const handleAddExpense = async () => {
-        console.log(newCategory)
-        console.log(newAmount)
+    const handleAddExpense = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
         if (!newCategory || !newAmount || !userToken) {
             console.error("Missing category, amount, or userToken");
             return;
@@ -218,11 +221,12 @@ const ExpensesPage = () => {
                 })
             });
     
-            console.log("POST response status:", response.status);
-    
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Backend error:", errorData);
+                setModalTitle("Budget Creation Failed");
+                setModalMessage(errorData.message || response.statusText || "Failed to create budget. Please try again.");
+                setShowModal(true);
                 throw new Error("Failed to save budget");
             }
     
@@ -262,6 +266,9 @@ const ExpensesPage = () => {
             });
     
             if (!response.ok) {
+                setModalTitle("Budget Deletion Failed");
+                setModalMessage(response.statusText || "Failed to delete budget. Please try again.");
+                setShowModal(true);
                 throw new Error("Failed to delete budget");
             }
     
@@ -280,7 +287,9 @@ const ExpensesPage = () => {
         setEditedAmount(expenseToEdit.value.toString());
     };
 
-    const handleSaveEdit = async () => {
+    const handleSaveEdit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
         if (editingIndex === null || !userToken) return;
         const amount = parseFloat(editedAmount);
         if (isNaN(amount) || amount <= 0) return;
@@ -301,6 +310,9 @@ const ExpensesPage = () => {
             });
     
             if (!response.ok) {
+                setModalTitle("Budget Update Failed");
+                setModalMessage(response.statusText || "Failed to update budget. Please try again.");
+                setShowModal(true);
                 throw new Error("Failed to update budget");
             }
     
@@ -376,9 +388,10 @@ const ExpensesPage = () => {
                                 <h3 className="text-lg font-semibold text-dark-green mb-2">
                                     Add New Budget Category
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          
+                                <form className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={handleAddExpense}>
                                     <Select id="categories" value={newCategory} onChange={handleCategoryChange} required>
-                                        <option disabled selected value="">
+                                        <option disabled value="">
                                             -- Select a category --
                                         </option>
                                         <option value= "housing">Housing/Utilities</option>
@@ -387,8 +400,8 @@ const ExpensesPage = () => {
                                         <option value = "healthcare">Healthcare</option>
                                         <option value = "debt">Debt</option>
                                         <option value = "savings">Savings</option>
-                                        <option value = "personal">Personal</option>    
-                                        <option value = "miscellaneous">Miscellaneous</option>   
+                                        <option value = "personal">Personal</option>
+                                        <option value = "miscellaneous">Miscellaneous</option>
                                     </Select>
                                     {/**                                     <input
                                         type="text"
@@ -397,9 +410,8 @@ const ExpensesPage = () => {
                                         onChange={(e) => setNewCategory(e.target.value)}
                                         className="p-2 border rounded-md flex-1"
                                     />
-*/}
-                                    <TextInput id="amount" type="number" placeholder="Amount" value={newAmount} min= "0" onChange={handleAmountChange}required />
-
+                                */}
+                                    <TextInput id="amount" type="number" placeholder="Amount" value={newAmount} min= "0.01" step="0.01" onChange={handleAmountChange}required />
                                     {/*                                 <input
                                         type="number"
                                         min="0"
@@ -408,14 +420,14 @@ const ExpensesPage = () => {
                                         onChange={(e) => setNewAmount(e.target.value)}
                                         className="p-2 border rounded-md flex-1"
                                     />*/}
-   
                                     <Button
-                                        onClick={handleAddExpense}
+                                        type="submit"
                                         className=" text-white px-4 py-2 rounded-md"
                                     >
                                         Add
                                     </Button>
-                                 </div>
+                                </form>
+                                
                             </div>
 
                             <div>
@@ -427,26 +439,29 @@ const ExpensesPage = () => {
                                             className="flex justify-between items-center border-b pb-1 text-blue-gray"
                                         >
                                             {editingIndex === index ? (
-                                                <div className="flex gap-2 w-full">
+                                                <form className="flex gap-2 w-full" onSubmit={handleSaveEdit}>
                                                     <input
                                                         type="text"
                                                         value={editedCategory}
-                                                        onChange={(e) => setEditedCategory(e.target.value)}
-                                                        className="p-2 border rounded-md flex-1"
+                                                        readOnly
+                                                        className="p-2 border rounded-md flex-1 bg-gray-100 cursor-not-allowed"
                                                     />
                                                     <input
                                                         type="number"
                                                         value={editedAmount}
+                                                        min="0.01"
+                                                        step="0.01"
                                                         onChange={(e) => setEditedAmount(e.target.value)}
                                                         className="p-2 border rounded-md w-24"
+                                                        required
                                                     />
                                                     <button
-                                                        onClick={handleSaveEdit}
+                                                        type="submit"
                                                         className="bg-dark-green text-white px-3 py-1 rounded-md hover:bg-green-800"
                                                     >
                                                         Save
                                                     </button>
-                                                </div>
+                                                </form>
                                             ) : (
                                                 <>
                                                     <span className="inline-block w-[120px]">{item.name}</span>
@@ -480,6 +495,17 @@ const ExpensesPage = () => {
                 </div>
             </div>
 
+            <Modal show={showModal} onClose={() => setShowModal(false)}>
+                <Modal.Header>{modalTitle}</Modal.Header>
+        
+                <Modal.Body>
+                    <p>{modalMessage}</p>
+                </Modal.Body>
+        
+                <Modal.Footer>
+                    <Button className="bg-blue-gray font-bold hover:!bg-light-blue active:!bg-light-blue" onClick={() => setShowModal(false)}>OK</Button>
+                </Modal.Footer>
+            </Modal>
         </main>
 
     );
