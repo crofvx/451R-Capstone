@@ -123,6 +123,10 @@ public class UserService {
 		User user = optionalUser.orElseThrow(() -> new IllegalArgumentException("User not found"));
 
 		if (!user.getEmail().equals(newEmail)) {
+			if (emailIsTaken(newEmail)) {
+				throw new IllegalArgumentException("Email is already taken");
+			}
+
 			user.setEmail(newEmail);
 		}
 

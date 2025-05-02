@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Banking App",
-  description: "A banking and budgeting web app",
+  title: "Quantum Budgeting",
+  description: "Manage monies your way",
 };
 
 export default function RootLayout({
